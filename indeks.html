@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SBF PERSONEL SİSTEMİ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background: radial-gradient(circle at center, #2b59c3 0%, #1e3a8a 100%); }
+        /* Sayı girişindeki okları kaldırma (Chrome, Safari, Edge, Opera) */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        /* Sayı girişindeki okları kaldırma (Firefox) */
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4" onload="kontrolEt()">
+    <div class="bg-white p-10 rounded-[2.5rem] shadow-2xl max-w-sm w-full text-center">
+        <div class="mb-6 flex justify-center">
+            <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg">
+                <i class="fa-solid fa-bolt"></i>
+            </div>
+        </div>
+        <h2 class="text-2xl font-black mb-8 text-slate-800 tracking-tighter uppercase leading-tight">SBF İŞKUR ÖĞRENCİ PERSONEL</h2>
+        
+        <div class="space-y-4">
+            <input type="text" id="name" placeholder="ADINIZ SOYADINIZ" class="w-full p-4 border border-slate-200 rounded-2xl outline-none text-center font-bold uppercase bg-slate-50 focus:border-blue-500 transition-all">
+            
+            <div class="flex items-center justify-center gap-2 py-1">
+                <input type="checkbox" id="remember" class="w-4 h-4 accent-blue-600 cursor-pointer">
+                <label for="remember" class="text-[11px] font-black text-slate-500 uppercase cursor-pointer select-none">Beni Hatırla</label>
+            </div>
+
+            <input type="number" id="code" placeholder="GÜVENLİK KODU" class="w-full p-4 border-2 border-dashed border-blue-200 rounded-2xl outline-none text-center font-black text-3xl text-blue-600 bg-blue-50">
+            
+            <div class="flex flex-col gap-3">
+                <button onclick="kaydet('GİRİŞ')" class="bg-green-500 hover:bg-green-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all text-sm uppercase flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-right-to-bracket"></i> FAKÜLTE GİRİŞ
+                </button>
+                <button onclick="kaydet('ÇIKIŞ')" class="bg-red-500 hover:bg-red-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all text-sm uppercase flex items-center justify-center gap-3">
+                    <i class="fa-solid fa-right-from-bracket"></i> FAKÜLTE ÇIKIŞ
+                </button>
+            </div>
+        </div>
+        
+        <div id="msg" class="mt-6 text-[11px] font-black uppercase hidden tracking-widest"></div>
+
+        <div class="mt-8 pt-6 border-t border-slate-100">
+            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                © 2026 SBF Bilgi İşlem Birimi - Tüm Hakları Saklıdır
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const sURL = "https://script.google.com/macros/s/AKfycbyWe0Pq_pq-ScVVO8zcCE_v663lktadZInwaZwlbS1mqQ0KxI1D2MjKVF090t6FARHsIQ/exec";
+
+        function kontrolEt() {
+            const savedName = localStorage.getItem('sbf_personel_name');
+            if (savedName) {
+                document.getElementById('name').value = savedName;
+                document.getElementById('remember').checked = true;
+            }
+        }
+
+        function kaydet(tip) {
+            const n = document.getElementById('name').value;
+            const c = document.getElementById('code').value;
+            const r = document.getElementById('remember').checked;
+            const m = document.getElementById('msg');
+            
+            if(!n || !c) { alert("Lütfen adınızı ve güvenlik kodunu girin!"); return; }
+
+            if (r) {
+                localStorage.setItem('sbf_personel_name', n);
+            } else {
+                localStorage.removeItem('sbf_personel_name');
+            }
+
+            m.classList.remove('hidden', 'text-green-500', 'text-red-500');
+            m.classList.add('text-blue-500');
+            m.innerText = "⏳ GÜVENLİK KONTROLÜ YAPILIYOR...";
+            
+            const script = document.createElement('script');
+            const callbackName = 'google_callback_' + Math.round(Math.random() * 1000000);
+            
+            window[callbackName] = function(data) {
+                if (data.result === "OK") {
+                    m.innerText = "✅ İŞLEM BAŞARILI: " + tip;
+                    m.className = "mt-6 text-[11px] font-black uppercase text-green-500";
+                    document.getElementById('code').value = "";
+                } else {
+                    m.innerText = "❌ HATA: GÜVENLİK KODU YANLIŞ!";
+                    m.className = "mt-6 text-[11px] font-black uppercase text-red-500";
+                }
+                delete window[callbackName];
+                document.body.removeChild(script);
+                setTimeout(() => { m.classList.add('hidden'); }, 4000);
+            };
+
+            script.src = sURL + "?action=kaydet&name=" + encodeURIComponent(n) + "&type=" + encodeURIComponent(tip) + "&code=" + encodeURIComponent(c) + "&callback=" + callbackName;
+            document.body.appendChild(script);
+        }
+    </script>
+</body>
+</html>
