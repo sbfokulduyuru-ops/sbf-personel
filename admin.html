@@ -14,7 +14,8 @@
             body { background: white; padding: 0; }
             .admin-card { border: none; box-shadow: none; max-width: 100% !important; }
         }
-        .tight-row td { padding: 1rem 1.5rem !important; }
+        /* Satır boşlukları senin istediğin gibi dar tutuldu */
+        .tight-row td { padding: 0.25rem 1.5rem !important; }
         .code-display { text-shadow: 0 10px 15px rgba(0,0,0,0.05); letter-spacing: 0.1em; }
         .login-card { background: rgba(255, 255, 255, 0.95); border-radius: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); }
         #timerContainer { transition: background-color 1s linear; }
@@ -24,17 +25,15 @@
 
     <div id="lock" class="fixed inset-0 z-[999] bg-[#1e3a8a] flex items-center justify-center p-4 no-print">
         <div class="login-card p-10 w-full max-w-sm text-center">
-            <div class="flex justify-center mb-4">
-                <div class="relative">
-                    <i class="fa-solid fa-user text-6xl text-[#3b82f6]"></i>
-                    <i class="fa-solid fa-shield-halved absolute -right-2 -bottom-1 text-2xl text-[#1e3a8a] bg-white rounded-full p-0.5"></i>
+            <div class="flex justify-center mb-6">
+                <div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg">
+                    <i class="fa-solid fa-lock"></i>
                 </div>
             </div>
-            <h2 class="text-xl font-black mb-8 uppercase tracking-tight text-slate-800">ADMİN GİRİŞİ</h2>
+            <h2 class="text-xl font-black mb-8 uppercase tracking-tight text-slate-800">SBF İŞKUR ÖĞRENCİ KONTROL PANELİ GİRİŞİ</h2>
             <div class="space-y-4">
-                <input type="text" id="user" placeholder="Kullanıcı Adı" class="w-full p-4 border border-blue-100 rounded-2xl outline-none text-center font-bold bg-blue-50/30 focus:border-blue-400 transition-all">
-                <input type="password" id="pw" placeholder="Şifre" class="w-full p-4 border border-blue-100 rounded-2xl outline-none text-center font-bold bg-blue-50/30 focus:border-blue-400 transition-all">
-                <button onclick="login()" class="w-full bg-[#3b82f6] text-white font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest hover:bg-blue-600 transition-all">GİRİŞ YAP</button>
+                <input type="password" id="pw" placeholder="Sistem Şifresi" class="w-full p-4 border border-blue-100 rounded-2xl outline-none text-center font-bold bg-blue-50/30 focus:border-blue-400 transition-all">
+                <button onclick="login()" class="w-full bg-[#3b82f6] text-white font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest hover:bg-blue-600 transition-all">SİSTEMİ AÇ</button>
             </div>
         </div>
     </div>
@@ -152,12 +151,12 @@
         }
 
         function login() {
-            const u = document.getElementById('user').value;
             const p = document.getElementById('pw').value;
-            if (u === "admin" && p === "12345") {
+            // Eski sistemdeki gibi sadece şifre: 12345
+            if (p === "12345") {
                 sessionStorage.setItem('admin_session', 'active');
                 checkAuth();
-            } else { alert("Kullanıcı Adı veya Şifre Hatalı!"); }
+            } else { alert("Şifre Hatalı!"); }
         }
 
         function logout() { sessionStorage.removeItem('admin_session'); location.reload(); }
