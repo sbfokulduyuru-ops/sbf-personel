@@ -63,7 +63,10 @@
                 <div class="bg-blue-600 rounded-[2.5rem] p-10 text-white shadow-xl shadow-blue-200"><p class="text-[14px] font-black opacity-80 mb-3">İÇERİDE</p><div id="statPresent" class="text-7xl font-black">0</div></div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 no-print">
-                <input type="text" id="araInput" onkeyup="tabloyuFiltrele()" placeholder="İsim ara..." class="p-5 bg-white border border-slate-200 rounded-3xl outline-none font-bold text-lg shadow-sm"><input type="date" id="tarihInput" onchange="tabloyuFiltrele()" class="p-5 bg-white border border-slate-200 rounded-3xl outline-none font-bold text-lg shadow-sm"><select id="tipInput" onchange="tabloyuFiltrele()" class="p-5 bg-white border border-slate-200 rounded-3xl font-black uppercase text-sm cursor-pointer shadow-sm"><option value="">TÜMÜ</option><option value="GİRİŞ">GİRİŞ</option><option value="ÇIKIŞ">ÇIKIŞ</option></select><button onclick="filtreTemizle()" class="bg-white border border-slate-200 p-5 rounded-3xl font-black text-xs uppercase text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center gap-2 shadow-sm"><i class="fa-solid fa-filter-circle-xmark"></i> SIFIRLA</button>
+                <input type="text" id="araInput" onkeyup="tabloyuFiltrele()" placeholder="İsim ara..." class="p-5 bg-white border border-slate-200 rounded-3xl outline-none font-bold text-lg shadow-sm">
+                <input type="date" id="tarihInput" onchange="tabloyuFiltrele()" class="p-5 bg-white border border-slate-200 rounded-3xl outline-none font-bold text-lg shadow-sm">
+                <select id="tipInput" onchange="tabloyuFiltrele()" class="p-5 bg-white border border-slate-200 rounded-3xl font-black uppercase text-sm cursor-pointer shadow-sm"><option value="">TÜMÜ</option><option value="GİRİŞ">GİRİŞ</option><option value="ÇIKIŞ">ÇIKIŞ</option></select>
+                <button onclick="filtreTemizle()" class="bg-white border border-slate-200 p-5 rounded-3xl font-black text-xs uppercase text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center gap-2 shadow-sm"><i class="fa-solid fa-filter-circle-xmark"></i> SIFIRLA</button>
             </div>
             <div class="bg-white rounded-[3rem] shadow-xl overflow-hidden border border-slate-200 mb-20">
                 <table id="anaTablo" class="w-full text-left border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs font-black uppercase border-b"><tr><th class="p-6">PERSONEL ADI</th><th class="p-6 text-center">TARİH</th><th class="p-6 text-center">SAAT</th><th class="p-6 text-center">İŞLEM</th><th class="p-6 text-center no-print text-red-500 w-12">SİL</th></tr></thead><tbody id="tabloBody" class="font-bold text-slate-700 italic text-sm"></tbody></table>
@@ -73,31 +76,63 @@
     </div>
     <script>
         const sURL = "https://script.google.com/macros/s/AKfycbzHsifMaIBYD39c1DH_mNpLsvOHM-jwmDvX1CL7x7Fe6TMSAmNVWd2ou5bifUln4cBqUQ/exec";
-        function checkAuth() { if (sessionStorage.getItem('admin_session') === 'active') { document.getElementById('lock').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); document.getElementById('tarihInput').value = new Date().toISOString().split('T')[0]; baslat(); updateClock(); } }
-        function updateClock() { const now = new Date(); const gunler = ["PAZAR", "PAZARTESİ", "SALI", "ÇARŞAMBA", "PERŞEMBE", "CUMA", "CUMARTESİ"]; const aylar = ["OCAK", "ŞUBAT", "MART", "NİSAN", "MAYIS", "HAZİRAN", "TEMMUZ", "AĞUSTOS", "EYLÜL", "EKİM", "KASIM", "ARALIK"]; const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getFullYear()} - ${gunler[now.getDay()]} - ${now.toLocaleTimeString('tr-TR')}`; document.getElementById('liveClock').innerText = tarihStr; setTimeout(updateClock, 1000); }
+        
+        // --- TÜRKİYE YEREL TARİHİNİ ALAN FONKSİYON ---
+        function getTRDate() {
+            const now = new Date();
+            const trNow = new Date(now.getTime() + (3 * 60 * 60 * 1000)); // GMT+3 Ayarı
+            return trNow.toISOString().split('T')[0];
+        }
+
+        function checkAuth() { 
+            if (sessionStorage.getItem('admin_session') === 'active') { 
+                document.getElementById('lock').classList.add('hidden'); 
+                document.getElementById('main').classList.remove('hidden'); 
+                
+                const trToday = getTRDate();
+                document.getElementById('tarihInput').value = trToday;
+                document.getElementById('tarihInput').setAttribute('max', trToday); 
+                
+                baslat(); updateClock(); 
+            } 
+        }
+
+        function updateClock() { 
+            const now = new Date(); 
+            const gunler = ["PAZAR", "PAZARTESİ", "SALI", "ÇARŞAMBA", "PERŞEMBE", "CUMA", "CUMARTESİ"]; 
+            const aylar = ["OCAK", "ŞUBAT", "MART", "NİSAN", "MAYIS", "HAZİRAN", "TEMMUZ", "AĞUSTOS", "EYLÜL", "EKİM", "KASIM", "ARALIK"]; 
+            const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getFullYear()} - ${gunler[now.getDay()]} - ${now.toLocaleTimeString('tr-TR')}`; 
+            document.getElementById('liveClock').innerText = tarihStr;
+
+            // GECE 00:00 KONTROLÜ (Otomatik Yeni Gün Geçişi)
+            if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() === 0) {
+                const trToday = getTRDate();
+                document.getElementById('tarihInput').value = trToday;
+                document.getElementById('tarihInput').setAttribute('max', trToday);
+                verileriCek();
+            }
+            setTimeout(updateClock, 1000); 
+        }
+
         function login() { if (document.getElementById('pw').value === "12345") { sessionStorage.setItem('admin_session', 'active'); checkAuth(); } else alert("Hata!"); }
         function logout() { sessionStorage.removeItem('admin_session'); location.reload(); }
         function baslat() { verileriCek(); setInterval(verileriCek, 2000); }
+
         function verileriCek() {
             fetch(sURL + "?v=" + new Date().getTime()).then(res => res.json()).then(data => {
                 if(data.secureKey) {
-                    let rawCode = data.secureKey.toString();
-                    // 6 haneden büyükse mod alarak 6 haneye zorla, küçükse başına sıfır ekle
-                    let cleanCode = (parseInt(rawCode) % 1000000).toString().padStart(6, '0');
-                    const currentCode = document.getElementById('kod').innerText;
-                    if(currentCode !== cleanCode) document.getElementById('kod').innerText = cleanCode;
+                    let cleanCode = (parseInt(data.secureKey.toString()) % 1000000).toString().padStart(6, '0');
+                    if(document.getElementById('kod').innerText !== cleanCode) document.getElementById('kod').innerText = cleanCode;
                 }
                 let now = new Date().getTime();
                 let kalanMS = 30000 - (now % 30000);
                 let kalanSN = Math.ceil(kalanMS / 1000);
                 let oran = kalanMS / 30000;
                 let colorRGB = `rgb(${Math.floor(239 * (1 - oran))}, ${Math.floor(197 * oran)}, ${Math.floor(94 * oran)})`;
-                let timerTxt = document.getElementById('timer');
-                timerTxt.innerText = kalanSN + " SN KALDI";
-                timerTxt.style.color = colorRGB;
-                let container = document.getElementById('timerContainer');
-                container.style.width = (oran * 100) + "%";
-                container.style.backgroundColor = colorRGB;
+                document.getElementById('timer').innerText = kalanSN + " SN KALDI";
+                document.getElementById('timer').style.color = colorRGB;
+                document.getElementById('timerContainer').style.width = (oran * 100) + "%";
+                document.getElementById('timerContainer').style.backgroundColor = colorRGB;
                 if (data.records) {
                     const bBody = document.getElementById('tabloBody'); bBody.innerHTML = "";
                     data.records.reverse().forEach(r => {
@@ -108,6 +143,7 @@
                 }
             });
         }
+
         function tabloyuFiltrele() {
             const isim = document.getElementById("araInput").value.toUpperCase();
             const tip = document.getElementById("tipInput").value.toUpperCase();
@@ -125,7 +161,15 @@
             document.getElementById('statTotal').innerText = t; document.getElementById('statIn').innerText = iC;
             document.getElementById('statOut').innerText = oC; document.getElementById('statPresent').innerText = (iC-oC);
         }
-        function filtreTemizle() { document.getElementById("araInput").value=""; document.getElementById("tarihInput").value=""; document.getElementById("tipInput").value=""; tabloyuFiltrele(); }
+
+        function filtreTemizle() { 
+            document.getElementById("araInput").value=""; 
+            const trToday = getTRDate();
+            document.getElementById("tarihInput").value = trToday; 
+            document.getElementById("tipInput").value=""; 
+            tabloyuFiltrele(); 
+        }
+
         function kayitSil(id) {
             if(confirm("Silinsin mi?")) {
                 const s = document.createElement('script'); const cName = 'del_cb_'+Math.floor(Math.random()*1e6);
