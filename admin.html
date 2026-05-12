@@ -29,9 +29,9 @@
         .tight-row td { padding: 0.25rem 1.5rem !important; }
         .code-display { text-shadow: 0 10px 15px rgba(0,0,0,0.05); letter-spacing: 0.1em; }
         .login-card { background: rgba(255, 255, 255, 0.95); border-radius: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); }
-        #timerContainer { transition: width 2.1s linear, background-color 0.5s ease; width: 100%; height: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 9999px; }
+        #timerContainer { transition: width 1s linear; width: 100%; height: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 9999px; }
         .timer-wrapper { width: 100%; max-width: 400px; background-color: rgba(255, 255, 255, 0.1); border-radius: 9999px; margin: 0 auto 2rem auto; position: relative; }
-        #timer { display: block; font-weight: 900; font-style: italic; margin-bottom: 8px; text-transform: uppercase; font-size: 1.25rem; transition: color 0.5s ease; }
+        #timer { display: block; font-weight: 900; font-style: italic; margin-bottom: 8px; text-transform: uppercase; font-size: 1.25rem; }
     </style>
 </head>
 <body class="min-h-screen" onload="checkAuth()">
@@ -76,11 +76,11 @@
     </div>
     <script>
         const sURL = "https://script.google.com/macros/s/AKfycbzHsifMaIBYD39c1DH_mNpLsvOHM-jwmDvX1CL7x7Fe6TMSAmNVWd2ou5bifUln4cBqUQ/exec";
-        
-        // --- TÜRKİYE YEREL TARİHİNİ ALAN FONKSİYON ---
+        let sonVeriHash = "";
+
         function getTRDate() {
             const now = new Date();
-            const trNow = new Date(now.getTime() + (3 * 60 * 60 * 1000)); // GMT+3 Ayarı
+            const trNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000));
             return trNow.toISOString().split('T')[0];
         }
 
@@ -88,11 +88,9 @@
             if (sessionStorage.getItem('admin_session') === 'active') { 
                 document.getElementById('lock').classList.add('hidden'); 
                 document.getElementById('main').classList.remove('hidden'); 
-                
                 const trToday = getTRDate();
                 document.getElementById('tarihInput').value = trToday;
                 document.getElementById('tarihInput').setAttribute('max', trToday); 
-                
                 baslat(); updateClock(); 
             } 
         }
@@ -104,44 +102,63 @@
             const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getFullYear()} - ${gunler[now.getDay()]} - ${now.toLocaleTimeString('tr-TR')}`; 
             document.getElementById('liveClock').innerText = tarihStr;
 
-            // GECE 00:00 KONTROLÜ (Otomatik Yeni Gün Geçişi)
+            // SAYAÇ MANTIĞI - Her saniye tetiklenir, görsel akıcılık sağlar
+            let kalanMS = 30000 - (now.getTime() % 30000);
+            let kalanSN = Math.ceil(kalanMS / 1000);
+            let oran = kalanMS / 30000;
+            let colorRGB = `rgb(${Math.floor(239 * (1 - oran))}, ${Math.floor(197 * oran)}, ${Math.floor(94 * oran)})`;
+            
+            const timerEl = document.getElementById('timer');
+            const barEl = document.getElementById('timerContainer');
+            if(timerEl && barEl) {
+                timerEl.innerText = (kalanSN === 0 ? 30 : kalanSN) + " SN KALDI";
+                timerEl.style.color = colorRGB;
+                barEl.style.width = (oran * 100) + "%";
+                barEl.style.backgroundColor = colorRGB;
+            }
+
             if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() === 0) {
-                const trToday = getTRDate();
-                document.getElementById('tarihInput').value = trToday;
-                document.getElementById('tarihInput').setAttribute('max', trToday);
-                verileriCek();
+                location.reload(); // Gece yarısı temizlik
             }
             setTimeout(updateClock, 1000); 
         }
 
         function login() { if (document.getElementById('pw').value === "12345") { sessionStorage.setItem('admin_session', 'active'); checkAuth(); } else alert("Hata!"); }
         function logout() { sessionStorage.removeItem('admin_session'); location.reload(); }
-        function baslat() { verileriCek(); setInterval(verileriCek, 2000); }
+        function baslat() { verileriCek(); setInterval(verileriCek, 3000); } // 3 saniyeye çekildi (hız için)
 
         function verileriCek() {
             fetch(sURL + "?v=" + new Date().getTime()).then(res => res.json()).then(data => {
+                // Kod Güncelleme
                 if(data.secureKey) {
                     let cleanCode = (parseInt(data.secureKey.toString()) % 1000000).toString().padStart(6, '0');
                     if(document.getElementById('kod').innerText !== cleanCode) document.getElementById('kod').innerText = cleanCode;
                 }
-                let now = new Date().getTime();
-                let kalanMS = 30000 - (now % 30000);
-                let kalanSN = Math.ceil(kalanMS / 1000);
-                let oran = kalanMS / 30000;
-                let colorRGB = `rgb(${Math.floor(239 * (1 - oran))}, ${Math.floor(197 * oran)}, ${Math.floor(94 * oran)})`;
-                document.getElementById('timer').innerText = kalanSN + " SN KALDI";
-                document.getElementById('timer').style.color = colorRGB;
-                document.getElementById('timerContainer').style.width = (oran * 100) + "%";
-                document.getElementById('timerContainer').style.backgroundColor = colorRGB;
+                
+                // Veri Değişikliği Kontrolü (Hash kontrolü ile gereksiz tablo çizimini engeller)
+                let currentHash = JSON.stringify(data.records || []);
+                if (currentHash === sonVeriHash) return; 
+                sonVeriHash = currentHash;
+
                 if (data.records) {
-                    const bBody = document.getElementById('tabloBody'); bBody.innerHTML = "";
-                    data.records.reverse().forEach(r => {
+                    const bBody = document.getElementById('tabloBody');
+                    let htmlBuffer = "";
+                    const records = [...data.records].reverse();
+                    
+                    records.forEach(r => {
                         const renk = r.type === 'GİRİŞ' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-rose-600 bg-rose-50 border-rose-100';
-                        bBody.innerHTML += `<tr class="tight-row border-b hover:bg-blue-50/30 transition-all"><td><div class="uppercase text-2xl font-black text-slate-800">${r.name}</div></td><td class="text-center"><span class="tarih-hucre">${r.date}</span></td><td class="text-center">${r.time}</td><td class="text-center"><span class="tip-hucre px-8 py-3 rounded-2xl text-sm font-black border ${renk}">${r.type}</span></td><td class="text-center no-print"><button onclick="kayitSil('${r.id}')" class="text-slate-300 hover:text-red-500 p-3"><i class="fa-solid fa-trash-can text-xl"></i></button></td></tr>`;
+                        htmlBuffer += `<tr class="tight-row border-b hover:bg-blue-50/30 transition-all">
+                            <td><div class="uppercase text-2xl font-black text-slate-800">${r.name}</div></td>
+                            <td class="text-center"><span class="tarih-hucre">${r.date}</span></td>
+                            <td class="text-center">${r.time}</td>
+                            <td class="text-center"><span class="tip-hucre px-8 py-3 rounded-2xl text-sm font-black border ${renk}">${r.type}</span></td>
+                            <td class="text-center no-print"><button onclick="kayitSil('${r.id}')" class="text-slate-300 hover:text-red-500 p-3"><i class="fa-solid fa-trash-can text-xl"></i></button></td>
+                        </tr>`;
                     });
+                    bBody.innerHTML = htmlBuffer;
                     tabloyuFiltrele();
                 }
-            });
+            }).catch(e => console.error("Veri çekilemedi"));
         }
 
         function tabloyuFiltrele() {
@@ -151,30 +168,47 @@
             let fTarih = takvim ? takvim.split("-").reverse().join(".") : "";
             const tr = document.getElementById("tabloBody").getElementsByTagName("tr");
             let t=0, iC=0, oC=0;
+            
             for (let i = 0; i < tr.length; i++) {
                 const sTarih = tr[i].querySelector(".tarih-hucre") ? tr[i].querySelector(".tarih-hucre").innerText : "";
                 const sTip = tr[i].querySelector(".tip-hucre") ? tr[i].querySelector(".tip-hucre").innerText : "";
-                if ((tr[i].innerText.toUpperCase().indexOf(isim)>-1) && (fTarih==="" || sTarih===fTarih) && (tip==="" || sTip===tip)) {
-                    tr[i].style.display = ""; t++; if(sTip==="GİRİŞ") iC++; if(sTip==="ÇIKIŞ") oC++;
-                } else tr[i].style.display = "none";
+                const metin = tr[i].innerText.toUpperCase();
+                
+                if ((metin.indexOf(isim)>-1) && (fTarih==="" || sTarih===fTarih) && (tip==="" || sTip===tip)) {
+                    tr[i].style.display = ""; t++; 
+                    if(sTip==="GİRİŞ") iC++; 
+                    if(sTip==="ÇIKIŞ") oC++;
+                } else {
+                    tr[i].style.display = "none";
+                }
             }
-            document.getElementById('statTotal').innerText = t; document.getElementById('statIn').innerText = iC;
-            document.getElementById('statOut').innerText = oC; document.getElementById('statPresent').innerText = (iC-oC);
+            document.getElementById('statTotal').innerText = t; 
+            document.getElementById('statIn').innerText = iC;
+            document.getElementById('statOut').innerText = oC; 
+            document.getElementById('statPresent').innerText = (iC-oC);
         }
 
         function filtreTemizle() { 
             document.getElementById("araInput").value=""; 
-            const trToday = getTRDate();
-            document.getElementById("tarihInput").value = trToday; 
+            document.getElementById("tarihInput").value = getTRDate(); 
             document.getElementById("tipInput").value=""; 
             tabloyuFiltrele(); 
         }
 
         function kayitSil(id) {
-            if(confirm("Silinsin mi?")) {
-                const s = document.createElement('script'); const cName = 'del_cb_'+Math.floor(Math.random()*1e6);
-                window[cName] = function(d) { if(d.result==="OK") verileriCek(); delete window[cName]; document.body.removeChild(s); };
-                s.src = sURL + "?action=sil&id=" + id + "&callback=" + cName; document.body.appendChild(s);
+            if(confirm("Bu kaydı silmek istediğinize emin misiniz?")) {
+                const s = document.createElement('script'); 
+                const cName = 'del_cb_'+Math.floor(Math.random()*1e6);
+                window[cName] = function(d) { 
+                    if(d.result==="OK") {
+                        sonVeriHash = ""; // Hash'i sıfırla ki tablo yenilensin
+                        verileriCek();
+                    }
+                    delete window[cName]; 
+                    document.body.removeChild(s); 
+                };
+                s.src = sURL + "?action=sil&id=" + id + "&callback=" + cName; 
+                document.body.appendChild(s);
             }
         }
     </script>
