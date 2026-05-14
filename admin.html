@@ -166,7 +166,6 @@
                 const matchName = g.name.toUpperCase().includes(isim);
                 const matchDate = fTarih === "" || g.date === fTarih;
                 
-                // Filtreleme mantığı: GİRİŞ ise sadece girişi olanlar, ÇIKIŞ ise sadece çıkışı olanlar
                 const matchStatus = tipFiltre === "" || 
                                   (tipFiltre === "GİRİŞ" ? g.giris : 
                                   (tipFiltre === "ÇIKIŞ" ? g.cikis : true));
@@ -267,7 +266,8 @@
                 </tr>`;
             });
             document.getElementById('modalTotalTime').innerText = `${Math.floor(toplamDakika / 60)}s ${toplamDakika % 60}dk`;
-            document.getElementById('modalWorkDays').innerText = `${(toplamDakika / 480).toFixed(1)} GÜN`;
+            // GÜN HESABI 7 SAAT (420 DAKİKA) ÜZERİNDEN GÜNCELLENDİ
+            document.getElementById('modalWorkDays').innerText = `${(toplamDakika / 420).toFixed(1)} GÜN`;
             document.getElementById('personelModal').classList.remove('hidden');
         }
 
@@ -275,7 +275,8 @@
             const now = new Date(); const curMonth = (now.getMonth() + 1).toString().padStart(2, '0'); const curYear = now.getFullYear().toString();
             const ayIsmi = ["OCAK", "ŞUBAT", "MART", "NİSAN", "MAYIS", "HAZİRAN", "TEMMUZ", "AĞUSTOS", "EYLÜL", "EKİM", "KASIM", "ARALIK"][now.getMonth()];
             const personeller = [...new Set(tumKayitlar.map(r => r.name.toUpperCase().trim()))].sort((a, b) => a.localeCompare(b, 'tr'));
-            let htmlTablo = `<table><thead><tr><th style="width:60px">NO</th><th>PERSONEL ADI SOYADI</th><th>TOPLAM SÜRE</th><th>GÜN (8S)</th></tr></thead><tbody>`;
+            // BAŞLIK GÜN (7S) OLARAK GÜNCELLENDİ
+            let htmlTablo = `<table><thead><tr><th style="width:60px">NO</th><th>PERSONEL ADI SOYADI</th><th>TOPLAM SÜRE</th><th>GÜN (7S)</th></tr></thead><tbody>`;
             let noCount = 1;
             personeller.forEach(pName => {
                 const aylikKayitlar = tumKayitlar.filter(r => { const parts = r.date.split('.'); return r.name.toUpperCase().trim() === pName && parts[1] === curMonth && parts[2] === curYear; });
@@ -285,7 +286,8 @@
                     let giris = logs.find(l => l.type === "GİRİŞ"); let cikis = logs.find(l => l.type === "ÇIKIŞ");
                     if (giris && cikis) { const [gH, gM] = giris.time.split(':').map(Number); const [cH, cM] = cikis.time.split(':').map(Number); const fark = (cH * 60 + cM) - (gH * 60 + gM); if (fark > 0) pDakika += fark; }
                 });
-                if (pDakika > 0) { htmlTablo += `<tr><td>${noCount++}</td><td style="text-align:left;padding-left:20px">${pName}</td><td>${Math.floor(pDakika / 60)}S ${pDakika % 60}DK</td><td>${(pDakika/480).toFixed(1)}</td></tr>`; }
+                // TABLO HESABI 420 DAKİKA (7 SAAT) ÜZERİNDEN GÜNCELLENDİ
+                if (pDakika > 0) { htmlTablo += `<tr><td>${noCount++}</td><td style="text-align:left;padding-left:20px">${pName}</td><td>${Math.floor(pDakika / 60)}S ${pDakika % 60}DK</td><td>${(pDakika/420).toFixed(1)}</td></tr>`; }
             });
             htmlTablo += "</tbody></table>";
             const pencere = window.open('', '', 'height=800,width=1000');
