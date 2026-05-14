@@ -8,209 +8,299 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #1e3a8a; }
-        .no-print { display: block; }
+        
         @media print {
-            .no-print, nav, #lock, .timer-wrapper, #timer, .grid, input, select, button, .border-t, .fa-solid { display: none !important; }
-            body { background: white !important; padding: 0 !important; margin: 0 !important; }
+            .no-print, #totalTimeTitle_div, .timer-wrapper, #timer, nav { display: none !important; }
+            body { background: white !important; padding: 0 !important; margin: 0 !important; color: black !important; }
+            #main { display: block !important; }
             .bg-white { box-shadow: none !important; border: none !important; width: 100% !important; border-radius: 0 !important; }
-            table { border-collapse: collapse !important; width: 100% !important; margin: 0 !important; border: 1px solid #000 !important; }
-            th, td, td div, td span { 
-                border: 1px solid #000 !important; padding: 4px 6px !important; 
-                font-family: Arial, Helvetica, sans-serif !important; 
-                font-size: 12pt !important; color: black !important;
-                background: transparent !important; font-weight: bold !important;
-                line-height: 1.4 !important; text-transform: uppercase !important;
-                font-style: normal !important; text-align: center !important;
+            
+            table { border-collapse: collapse !important; width: 100% !important; margin-top: 10px !important; border: 1px solid #000 !important; }
+            th, td { 
+                border: 1px solid #000 !important; 
+                padding: 8px !important; 
+                text-align: center !important; 
+                color: black !important; 
+                font-family: Arial, sans-serif !important;
+                font-weight: bold !important;
+                text-transform: uppercase !important;
+                font-size: 11pt !important;
+                background: transparent !important;
+                line-height: 1.2 !important;
             }
-            td div { font-size: 12pt !important; }
-            td:first-child, td:first-child div { text-align: left !important; }
-            .tip-hucre { border: none !important; padding: 0 !important; background: transparent !important; color: black !important; box-shadow: none !important; font-size: 12pt !important; }
+            th { background-color: #eee !important; }
+            td div, td span { background: transparent !important; border: none !important; padding: 0 !important; color: black !important; box-shadow: none !important; font-size: 11pt !important; font-weight: bold !important; }
+            footer { display: block !important; position: fixed; bottom: 10px; width: 100%; text-align: center; font-size: 9pt !important; font-weight: bold !important; border-top: 1px solid #000; padding-top: 5px; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
-        .tight-row td { padding: 0.25rem 1.5rem !important; }
+
+        .personel-name-cell { font-size: 1.125rem; font-weight: 700; text-transform: uppercase; }
+        .tight-row td { padding: 0.75rem 1.5rem !important; }
         .code-display { text-shadow: 0 10px 15px rgba(0,0,0,0.05); letter-spacing: 0.1em; }
         .login-card { background: rgba(255, 255, 255, 0.95); border-radius: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); }
-        #timerContainer { transition: width 1s linear; width: 100%; height: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; border-radius: 9999px; }
+        #timerContainer { transition: width 1s linear; width: 100%; height: 20px; border-radius: 9999px; }
         .timer-wrapper { width: 100%; max-width: 400px; background-color: rgba(255, 255, 255, 0.1); border-radius: 9999px; margin: 0 auto 2rem auto; position: relative; }
-        #timer { display: block; font-weight: 900; font-style: italic; margin-bottom: 8px; text-transform: uppercase; font-size: 1.25rem; }
+        .personel-row:hover { cursor: pointer; background-color: #f8fafc; }
     </style>
 </head>
 <body class="min-h-screen" onload="checkAuth()">
+
     <div id="lock" class="fixed inset-0 z-[999] bg-[#1e3a8a] flex items-center justify-center p-4 no-print">
         <div class="login-card p-10 w-full max-w-sm text-center">
             <div class="flex justify-center mb-6"><div class="bg-blue-600 w-16 h-16 rounded-2xl flex items-center justify-center text-white text-3xl shadow-lg"><i class="fa-solid fa-lock"></i></div></div>
-            <h2 class="text-xl font-black mb-8 uppercase tracking-tight text-slate-800">SBF İŞKUR ÖĞRENCİ KONTROL PANELİ GİRİŞİ</h2>
+            <h2 class="text-xl font-black mb-8 uppercase tracking-tight text-slate-800">SBF İŞKUR ÖĞRENCİ KONTROL PANELİ</h2>
             <div class="space-y-4">
                 <input type="password" id="pw" placeholder="Sistem Şifresi" class="w-full p-4 border border-blue-100 rounded-2xl outline-none text-center font-bold bg-blue-50/30 focus:border-blue-400 transition-all">
                 <button onclick="login()" class="w-full bg-[#3b82f6] text-white font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest hover:bg-blue-600 transition-all">SİSTEMİ AÇ</button>
             </div>
         </div>
     </div>
+
     <div id="main" class="hidden bg-slate-100 min-h-screen">
         <nav class="bg-white border-b px-8 py-4 flex justify-between items-center sticky top-0 z-50 shadow-sm no-print">
-            <div class="flex items-center gap-4"><div class="bg-blue-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg"><i class="fa-solid fa-bolt"></i></div><h1 class="font-black text-slate-900 uppercase text-lg tracking-tighter leading-none">SBF PERSONEL TAKİP</h1></div>
-            <div class="hidden lg:flex items-center gap-6 border-x px-8 border-slate-100"><div id="liveClock" class="text-xl font-black text-slate-800 leading-none tabular-nums">...</div></div>
-            <div class="flex gap-3"><button onclick="window.print()" class="bg-slate-800 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase flex items-center gap-2 shadow-lg transition-all hover:bg-black"><i class="fa-solid fa-print"></i> PDF / YAZDIR</button><button onclick="logout()" class="bg-red-50 text-red-500 p-2.5 rounded-xl hover:bg-red-100 transition-all"><i class="fa-solid fa-power-off"></i></button></div>
+            <div class="flex items-center gap-4"><div class="bg-blue-600 w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg"><i class="fa-solid fa-bolt"></i></div><h1 class="font-black text-slate-900 uppercase text-lg tracking-tighter leading-none border-none">SBF PERSONEL TAKİP</h1></div>
+            <div id="liveClock" class="hidden lg:flex items-center gap-6 border-x px-8 border-slate-100 text-xl font-black text-slate-800 tabular-nums">...</div>
+            <div class="flex gap-3">
+                <button onclick="topluAylikDokum()" class="bg-rose-600 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase flex items-center gap-2 shadow-lg hover:bg-rose-700 transition-all"><i class="fa-solid fa-calendar-days"></i> AYLIK DÖKÜM AL</button>
+                <button onclick="window.print()" class="bg-slate-800 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase flex items-center gap-2 shadow-lg hover:bg-black transition-all"><i class="fa-solid fa-print"></i> PDF / YAZDIR</button>
+                <button onclick="logout()" class="bg-red-50 text-red-500 p-2.5 rounded-xl hover:bg-red-100 transition-all"><i class="fa-solid fa-power-off"></i></button>
+            </div>
         </nav>
+
         <div class="p-6 w-full max-w-[100%] mx-auto">
             <div class="bg-white rounded-[3.5rem] p-16 text-center mb-10 border border-slate-200 shadow-2xl relative overflow-hidden no-print">
                 <div class="absolute top-0 left-0 w-full h-3 bg-gradient-to-r from-blue-600 to-indigo-600"></div>
-                <div class="flex flex-col items-center justify-center"><span id="timer" class="no-print">...</span><div class="timer-wrapper no-print"><div id="timerContainer"></div></div><p class="text-[14px] font-black text-slate-400 uppercase tracking-[0.5em] mb-4">AKTİF GÜVENLİK KODU</p><div id="kod" class="text-[11rem] leading-none font-black text-slate-900 code-display">000000</div></div>
+                <div class="flex flex-col items-center justify-center"><span id="timer" class="no-print font-black text-xl mb-2 italic">...</span><div class="timer-wrapper no-print"><div id="timerContainer"></div></div><p class="text-[14px] font-black text-slate-400 uppercase tracking-[0.5em] mb-4">AKTİF GÜVENLİK KODU</p><div id="kod" class="text-[11rem] leading-none font-black text-slate-900 code-display">000000</div></div>
             </div>
+
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-10 no-print">
-                <div class="bg-white rounded-[2.5rem] p-10 border-l-[12px] border-slate-300 shadow-sm"><p class="text-[14px] font-black text-slate-400 mb-3">TOPLAM</p><div id="statTotal" class="text-7xl font-black text-slate-800">0</div></div>
-                <div class="bg-white rounded-[2.5rem] p-10 border-l-[12px] border-emerald-500 shadow-sm"><p class="text-[14px] font-black text-emerald-500 mb-3">GİRİŞ</p><div id="statIn" class="text-7xl font-black text-emerald-600">0</div></div>
-                <div class="bg-white rounded-[2.5rem] p-10 border-l-[12px] border-rose-500 shadow-sm"><p class="text-[14px] font-black text-rose-500 mb-3">ÇIKIŞ</p><div id="statOut" class="text-7xl font-black text-rose-600">0</div></div>
+                <div class="bg-white rounded-[2.5rem] p-10 border-l-[12px] border-slate-300 shadow-sm"><p class="text-[14px] font-black text-slate-400 mb-3">TOPLAM KAYIT</p><div id="statTotal" class="text-7xl font-black text-slate-800">0</div></div>
+                <div class="bg-white rounded-[2.5rem] p-10 border-l-[12px] border-emerald-500 shadow-sm"><p class="text-[14px] font-black text-emerald-500 mb-3">GİRİŞLER</p><div id="statIn" class="text-7xl font-black text-emerald-600">0</div></div>
+                <div class="bg-white rounded-[2.5rem] p-10 border-l-[12px] border-rose-500 shadow-sm"><p class="text-[14px] font-black text-rose-500 mb-3">ÇIKIŞLAR</p><div id="statOut" class="text-7xl font-black text-rose-600">0</div></div>
                 <div class="bg-blue-600 rounded-[2.5rem] p-10 text-white shadow-xl shadow-blue-200"><p class="text-[14px] font-black opacity-80 mb-3">İÇERİDE</p><div id="statPresent" class="text-7xl font-black">0</div></div>
             </div>
+
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 no-print">
                 <input type="text" id="araInput" onkeyup="tabloyuFiltrele()" placeholder="İsim ara..." class="p-5 bg-white border border-slate-200 rounded-3xl outline-none font-bold text-lg shadow-sm">
                 <input type="date" id="tarihInput" onchange="tabloyuFiltrele()" class="p-5 bg-white border border-slate-200 rounded-3xl outline-none font-bold text-lg shadow-sm">
-                <select id="tipInput" onchange="tabloyuFiltrele()" class="p-5 bg-white border border-slate-200 rounded-3xl font-black uppercase text-sm cursor-pointer shadow-sm"><option value="">TÜMÜ</option><option value="GİRİŞ">GİRİŞ</option><option value="ÇIKIŞ">ÇIKIŞ</option></select>
+                <select id="tipInput" onchange="tabloyuFiltrele()" class="p-5 bg-white border border-slate-200 rounded-3xl font-black uppercase text-sm cursor-pointer shadow-sm"><option value="">DURUM: TÜMÜ</option><option value="GİRİŞ">GİRİŞ</option><option value="ÇIKIŞ">ÇIKIŞ</option></select>
                 <button onclick="filtreTemizle()" class="bg-white border border-slate-200 p-5 rounded-3xl font-black text-xs uppercase text-slate-400 hover:text-blue-600 transition-all flex items-center justify-center gap-2 shadow-sm"><i class="fa-solid fa-filter-circle-xmark"></i> SIFIRLA</button>
             </div>
+
             <div class="bg-white rounded-[3rem] shadow-xl overflow-hidden border border-slate-200 mb-20">
-                <table id="anaTablo" class="w-full text-left border-collapse"><thead class="bg-slate-50 text-slate-500 text-xs font-black uppercase border-b"><tr><th class="p-6">PERSONEL ADI</th><th class="p-6 text-center">TARİH</th><th class="p-6 text-center">SAAT</th><th class="p-6 text-center">İŞLEM</th><th class="p-6 text-center no-print text-red-500 w-12">SİL</th></tr></thead><tbody id="tabloBody" class="font-bold text-slate-700 italic text-sm"></tbody></table>
+                <table id="anaTablo" class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b">
+                        <tr>
+                            <th class="p-6 text-slate-900 text-lg font-black uppercase tracking-tight">PERSONEL ADI</th>
+                            <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight">TARİH</th>
+                            <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight w-64">GİRİŞ - ÇIKIŞ</th>
+                            <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight">TOPLAM SÜRE</th>
+                            <th class="p-6 text-center no-print text-red-500 w-12">SİL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabloBody" class="font-bold text-slate-700 italic text-sm"></tbody>
+                </table>
                 <div class="p-8 border-t border-slate-50 text-center no-print"><p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">© 2026 SBF Bilgi İşlem Birimi - Tüm Hakları Saklıdır.</p></div>
             </div>
         </div>
     </div>
+
+    <!-- KİŞİSEL KART MODAL -->
+    <div id="personelModal" class="hidden fixed inset-0 z-[1000] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 no-print">
+        <div class="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-blue-600 p-8 text-white flex justify-between items-center shrink-0">
+                <div><p class="text-xs font-black opacity-70 uppercase tracking-widest mb-1">PERSONEL DOSYASI</p><h3 id="modalName" class="text-3xl font-black uppercase tracking-tight">İSİM SOYİSİM</h3></div>
+                <div class="flex items-center gap-2"><button onclick="ozelYazdir()" class="bg-slate-800 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase flex items-center gap-2 shadow-lg hover:bg-black transition-all"><i class="fa-solid fa-print"></i> PDF / YAZDIR</button><button onclick="modalKapat()" class="bg-white/20 hover:bg-white/40 p-3 rounded-xl transition-all"><i class="fa-solid fa-xmark text-xl"></i></button></div>
+            </div>
+            <div class="p-6 bg-slate-50 border-b flex flex-col md:flex-row gap-4 items-center justify-between no-print">
+                <div class="flex gap-2 w-full md:w-auto items-center">
+                    <select id="modalAy" onchange="kisiDetayGoster(document.getElementById('modalName').innerText)" class="p-3 bg-white border border-slate-200 rounded-xl font-bold outline-none text-sm w-32"><option value="01">OCAK</option><option value="02">ŞUBAT</option><option value="03">MART</option><option value="04">NİSAN</option><option value="05">MAYIS</option><option value="06">HAZİRAN</option><option value="07">TEMMUZ</option><option value="08">AĞUSTOS</option><option value="09">EYLÜL</option><option value="10">EKİM</option><option value="11">KASIM</option><option value="12">ARALIK</option></select>
+                    <select id="modalYil" onchange="kisiDetayGoster(document.getElementById('modalName').innerText)" class="p-3 bg-white border border-slate-200 rounded-xl font-bold outline-none text-sm w-24"><option value="2024">2024</option><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+                    <button onclick="kisiDetayGoster(document.getElementById('modalName').innerText, true)" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-black text-xs uppercase tracking-tighter hover:bg-blue-700 transition-all">TÜMÜ</button>
+                    <button onclick="kisiDetayGoster(document.getElementById('modalName').innerText, false)" class="bg-rose-500 text-white px-4 py-3 rounded-xl font-black text-xs uppercase tracking-tighter hover:bg-rose-600 transition-all">AYLIK MOD</button>
+                </div>
+            </div>
+            <div id="printArea" class="flex-1 overflow-y-auto p-8 bg-white">
+                <div id="totalTimeTitle_div" class="mb-8 p-6 bg-blue-50 border-2 border-blue-100 rounded-3xl flex items-center justify-between">
+                    <div><p id="totalTimeTitle" class="text-blue-600 text-xs font-black uppercase tracking-widest mb-1">ÇALIŞMA SÜRESİ</p><div class="flex items-baseline gap-4"><div id="modalTotalTime" class="text-4xl font-black text-blue-900">0s 0dk</div><div id="modalWorkDays" class="text-4xl font-black text-blue-500 bg-white px-3 py-1 rounded-lg border border-blue-100 shadow-sm">0 GÜN</div></div></div>
+                    <div class="bg-blue-600/10 p-4 rounded-2xl text-blue-600 text-3xl"><i class="fa-solid fa-calendar-check"></i></div>
+                </div>
+                <table class="w-full"><thead class="border-b-2 border-slate-100"><tr><th class="pb-4 text-left text-slate-900 text-lg font-black uppercase tracking-tight w-12">NO</th><th class="pb-4 text-center text-slate-900 text-lg font-black uppercase tracking-tight">TARİH</th><th class="pb-4 text-center text-slate-900 text-lg font-black uppercase tracking-tight">GİRİŞ / ÇIKIŞ</th><th class="pb-4 text-right text-slate-900 text-lg font-black uppercase tracking-tight">SÜRE</th></tr></thead><tbody id="modalBody" class="text-slate-700 font-bold"></tbody></table>
+            </div>
+        </div>
+    </div>
+
     <script>
         const sURL = "https://script.google.com/macros/s/AKfycbzHsifMaIBYD39c1DH_mNpLsvOHM-jwmDvX1CL7x7Fe6TMSAmNVWd2ou5bifUln4cBqUQ/exec";
-        let sonVeriHash = "";
-
-        function getTRDate() {
-            const now = new Date();
-            const trNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000));
-            return trNow.toISOString().split('T')[0];
-        }
-
-        function checkAuth() { 
-            if (sessionStorage.getItem('admin_session') === 'active') { 
-                document.getElementById('lock').classList.add('hidden'); 
-                document.getElementById('main').classList.remove('hidden'); 
-                const trToday = getTRDate();
-                document.getElementById('tarihInput').value = trToday;
-                document.getElementById('tarihInput').setAttribute('max', trToday); 
-                baslat(); updateClock(); 
-            } 
-        }
-
-        function updateClock() { 
-            const now = new Date(); 
-            const gunler = ["PAZAR", "PAZARTESİ", "SALI", "ÇARŞAMBA", "PERŞEMBE", "CUMA", "CUMARTESİ"]; 
-            const aylar = ["OCAK", "ŞUBAT", "MART", "NİSAN", "MAYIS", "HAZİRAN", "TEMMUZ", "AĞUSTOS", "EYLÜL", "EKİM", "KASIM", "ARALIK"]; 
-            const tarihStr = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getFullYear()} - ${gunler[now.getDay()]} - ${now.toLocaleTimeString('tr-TR')}`; 
-            document.getElementById('liveClock').innerText = tarihStr;
-
-            // SAYAÇ MANTIĞI - Her saniye tetiklenir, görsel akıcılık sağlar
-            let kalanMS = 30000 - (now.getTime() % 30000);
-            let kalanSN = Math.ceil(kalanMS / 1000);
-            let oran = kalanMS / 30000;
-            let colorRGB = `rgb(${Math.floor(239 * (1 - oran))}, ${Math.floor(197 * oran)}, ${Math.floor(94 * oran)})`;
-            
-            const timerEl = document.getElementById('timer');
-            const barEl = document.getElementById('timerContainer');
-            if(timerEl && barEl) {
-                timerEl.innerText = (kalanSN === 0 ? 30 : kalanSN) + " SN KALDI";
-                timerEl.style.color = colorRGB;
-                barEl.style.width = (oran * 100) + "%";
-                barEl.style.backgroundColor = colorRGB;
-            }
-
-            if (now.getHours() === 0 && now.getMinutes() === 0 && now.getSeconds() === 0) {
-                location.reload(); // Gece yarısı temizlik
-            }
-            setTimeout(updateClock, 1000); 
-        }
-
+        let tumKayitlar = []; let sonVeriHash = "";
+        function getTRDate() { const now = new Date(); const trNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000)); return trNow.toISOString().split('T')[0]; }
+        function checkAuth() { if (sessionStorage.getItem('admin_session') === 'active') { document.getElementById('lock').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); const trToday = getTRDate(); document.getElementById('tarihInput').value = trToday; document.getElementById('tarihInput').setAttribute('max', trToday); document.getElementById('modalAy').value = (new Date().getMonth() + 1).toString().padStart(2, '0'); baslat(); updateClock(); } }
+        function updateClock() { const now = new Date(); const aylar = ["OCAK", "ŞUBAT", "MART", "NİSAN", "MAYIS", "HAZİRAN", "TEMMUZ", "AĞUSTOS", "EYLÜL", "EKİM", "KASIM", "ARALIK"]; const gunler = ["PAZAR", "PAZARTESİ", "SALI", "ÇARŞAMBA", "PERŞEMBE", "CUMA", "CUMARTESİ"]; document.getElementById('liveClock').innerText = `${now.getDate()} ${aylar[now.getMonth()]} ${now.getFullYear()} - ${gunler[now.getDay()]} - ${now.toLocaleTimeString('tr-TR')}`; let kalanMS = 30000 - (now.getTime() % 30000); let oran = kalanMS / 30000; let colorRGB = `rgb(${Math.floor(239 * (1 - oran))}, ${Math.floor(197 * oran)}, ${Math.floor(94 * oran)})`; if(document.getElementById('timer')) { document.getElementById('timer').innerText = (Math.ceil(kalanMS / 1000) || 30) + " SN KALDI"; document.getElementById('timer').style.color = colorRGB; } if(document.getElementById('timerContainer')) { document.getElementById('timerContainer').style.width = (oran * 100) + "%"; document.getElementById('timerContainer').style.backgroundColor = colorRGB; } setTimeout(updateClock, 1000); }
         function login() { if (document.getElementById('pw').value === "12345") { sessionStorage.setItem('admin_session', 'active'); checkAuth(); } else alert("Hata!"); }
         function logout() { sessionStorage.removeItem('admin_session'); location.reload(); }
-        function baslat() { verileriCek(); setInterval(verileriCek, 3000); } // 3 saniyeye çekildi (hız için)
-
-        function verileriCek() {
-            fetch(sURL + "?v=" + new Date().getTime()).then(res => res.json()).then(data => {
-                // Kod Güncelleme
-                if(data.secureKey) {
-                    let cleanCode = (parseInt(data.secureKey.toString()) % 1000000).toString().padStart(6, '0');
-                    if(document.getElementById('kod').innerText !== cleanCode) document.getElementById('kod').innerText = cleanCode;
-                }
-                
-                // Veri Değişikliği Kontrolü (Hash kontrolü ile gereksiz tablo çizimini engeller)
-                let currentHash = JSON.stringify(data.records || []);
-                if (currentHash === sonVeriHash) return; 
-                sonVeriHash = currentHash;
-
-                if (data.records) {
-                    const bBody = document.getElementById('tabloBody');
-                    let htmlBuffer = "";
-                    const records = [...data.records].reverse();
-                    
-                    records.forEach(r => {
-                        const renk = r.type === 'GİRİŞ' ? 'text-emerald-600 bg-emerald-50 border-emerald-100' : 'text-rose-600 bg-rose-50 border-rose-100';
-                        htmlBuffer += `<tr class="tight-row border-b hover:bg-blue-50/30 transition-all">
-                            <td><div class="uppercase text-2xl font-black text-slate-800">${r.name}</div></td>
-                            <td class="text-center"><span class="tarih-hucre">${r.date}</span></td>
-                            <td class="text-center">${r.time}</td>
-                            <td class="text-center"><span class="tip-hucre px-8 py-3 rounded-2xl text-sm font-black border ${renk}">${r.type}</span></td>
-                            <td class="text-center no-print"><button onclick="kayitSil('${r.id}')" class="text-slate-300 hover:text-red-500 p-3"><i class="fa-solid fa-trash-can text-xl"></i></button></td>
-                        </tr>`;
-                    });
-                    bBody.innerHTML = htmlBuffer;
-                    tabloyuFiltrele();
-                }
-            }).catch(e => console.error("Veri çekilemedi"));
-        }
+        function baslat() { verileriCek(); setInterval(verileriCek, 3000); }
+        function verileriCek() { fetch(sURL + "?v=" + new Date().getTime()).then(res => res.json()).then(data => { if(data.secureKey) { let cleanCode = (parseInt(data.secureKey.toString()) % 1000000).toString().padStart(6, '0'); if(document.getElementById('kod').innerText !== cleanCode) document.getElementById('kod').innerText = cleanCode; } let currentHash = JSON.stringify(data.records || []); if (currentHash === sonVeriHash) return; sonVeriHash = currentHash; tumKayitlar = data.records || []; tabloyuFiltrele(); }); }
 
         function tabloyuFiltrele() {
             const isim = document.getElementById("araInput").value.toUpperCase();
-            const tip = document.getElementById("tipInput").value.toUpperCase();
             const takvim = document.getElementById("tarihInput").value;
+            const tipFiltre = document.getElementById("tipInput").value;
             let fTarih = takvim ? takvim.split("-").reverse().join(".") : "";
-            const tr = document.getElementById("tabloBody").getElementsByTagName("tr");
-            let t=0, iC=0, oC=0;
+            const bBody = document.getElementById('tabloBody');
+
+            const tumPersonelIsimleri = [...new Set(tumKayitlar.map(r => r.name.toUpperCase().trim()))];
+
+            const gruplar = {};
+            tumKayitlar.forEach(r => {
+                const key = `${r.name}_${r.date}`;
+                if (!gruplar[key]) gruplar[key] = { name: r.name, date: r.date, giris: null, cikis: null, ids: [] };
+                if (r.type === "GİRİŞ") gruplar[key].giris = r;
+                if (r.type === "ÇIKIŞ") gruplar[key].cikis = r;
+                gruplar[key].ids.push(r.id);
+            });
+
+            let tGiris = 0, tCikis = 0;
+            let htmlBuffer = "";
             
-            for (let i = 0; i < tr.length; i++) {
-                const sTarih = tr[i].querySelector(".tarih-hucre") ? tr[i].querySelector(".tarih-hucre").innerText : "";
-                const sTip = tr[i].querySelector(".tip-hucre") ? tr[i].querySelector(".tip-hucre").innerText : "";
-                const metin = tr[i].innerText.toUpperCase();
+            let liste = Object.values(gruplar).filter(g => {
+                const matchName = g.name.toUpperCase().includes(isim);
+                const matchDate = fTarih === "" || g.date === fTarih;
                 
-                if ((metin.indexOf(isim)>-1) && (fTarih==="" || sTarih===fTarih) && (tip==="" || sTip===tip)) {
-                    tr[i].style.display = ""; t++; 
-                    if(sTip==="GİRİŞ") iC++; 
-                    if(sTip==="ÇIKIŞ") oC++;
-                } else {
-                    tr[i].style.display = "none";
-                }
-            }
-            document.getElementById('statTotal').innerText = t; 
-            document.getElementById('statIn').innerText = iC;
-            document.getElementById('statOut').innerText = oC; 
-            document.getElementById('statPresent').innerText = (iC-oC);
-        }
+                // Filtreleme mantığı: GİRİŞ ise sadece girişi olanlar, ÇIKIŞ ise sadece çıkışı olanlar
+                const matchStatus = tipFiltre === "" || 
+                                  (tipFiltre === "GİRİŞ" ? g.giris : 
+                                  (tipFiltre === "ÇIKIŞ" ? g.cikis : true));
+                
+                return matchName && matchDate && matchStatus;
+            }).reverse();
 
-        function filtreTemizle() { 
-            document.getElementById("araInput").value=""; 
-            document.getElementById("tarihInput").value = getTRDate(); 
-            document.getElementById("tipInput").value=""; 
-            tabloyuFiltrele(); 
-        }
-
-        function kayitSil(id) {
-            if(confirm("Bu kaydı silmek istediğinize emin misiniz?")) {
-                const s = document.createElement('script'); 
-                const cName = 'del_cb_'+Math.floor(Math.random()*1e6);
-                window[cName] = function(d) { 
-                    if(d.result==="OK") {
-                        sonVeriHash = ""; // Hash'i sıfırla ki tablo yenilensin
-                        verileriCek();
+            if (isim.length > 0 && tipFiltre === "") {
+                tumPersonelIsimleri.filter(p => p.includes(isim)).forEach(pName => {
+                    if (!liste.some(g => g.name.toUpperCase() === pName)) {
+                        liste.push({ name: pName, date: fTarih || "KAYITSIZ", giris: null, cikis: null, ids: [], isGhost: true });
                     }
-                    delete window[cName]; 
-                    document.body.removeChild(s); 
-                };
-                s.src = sURL + "?action=sil&id=" + id + "&callback=" + cName; 
-                document.body.appendChild(s);
+                });
             }
+
+            liste.forEach(g => {
+                let sureMetni = "--";
+                if (g.giris && g.cikis) {
+                    const [gH, gM] = g.giris.time.split(':').map(Number);
+                    const [cH, cM] = g.cikis.time.split(':').map(Number);
+                    const fark = (cH * 60 + cM) - (gH * 60 + gM);
+                    if (fark > 0) sureMetni = `${Math.floor(fark / 60)}S ${fark % 60}DK`;
+                }
+
+                const girisSaat = g.giris ? g.giris.time : "--:--";
+                const cikisSaat = g.cikis ? g.cikis.time : "--:--";
+                const girisStil = g.giris ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-300 border-slate-100";
+                const cikisStil = g.cikis ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-slate-50 text-slate-300 border-slate-100";
+
+                if(!g.isGhost) { if(g.giris) tGiris++; if(g.cikis) tCikis++; }
+
+                htmlBuffer += `<tr class="tight-row border-b personel-row">
+                    <td onclick="kisiDetayGoster('${g.name}')" class="personel-name-cell"><div class="text-slate-800 hover:text-blue-600 transition-colors">${g.name}</div></td>
+                    <td class="text-center font-bold text-lg">${g.date}</td>
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-3">
+                            <span class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${girisStil}">${girisSaat}</span>
+                            <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
+                            <span class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${cikisStil}">${cikisSaat}</span>
+                        </div>
+                    </td>
+                    <td class="text-center font-black text-blue-600 text-lg">${sureMetni}</td>
+                    <td class="text-center no-print">
+                        ${!g.isGhost ? `<button onclick="kayitlariSil('${g.ids.join(',')}')" class="text-slate-300 hover:text-red-500 p-3"><i class="fa-solid fa-trash-can text-xl"></i></button>` : ''}
+                    </td>
+                </tr>`;
+            });
+
+            bBody.innerHTML = htmlBuffer;
+            document.getElementById('statTotal').innerText = liste.filter(x=>!x.isGhost).length;
+            document.getElementById('statIn').innerText = tGiris;
+            document.getElementById('statOut').innerText = tCikis;
+            document.getElementById('statPresent').innerText = (tGiris - tCikis);
         }
+
+        function kayitlariSil(idsStr) {
+            if(!confirm("Bu güne ait tüm kayıtları silmek istiyor musunuz?")) return;
+            const ids = idsStr.split(',');
+            let silinen = 0;
+            ids.forEach(id => {
+                const s = document.createElement('script');
+                const cName = 'del_cb_'+Math.floor(Math.random()*1e6);
+                window[cName] = function(d) {
+                    silinen++;
+                    if(silinen === ids.length) { sonVeriHash = ""; verileriCek(); }
+                    delete window[cName];
+                    document.body.removeChild(s);
+                };
+                s.src = sURL + "?action=sil&id=" + id + "&callback=" + cName;
+                document.body.appendChild(s);
+            });
+        }
+
+        function kisiDetayGoster(isim, tumu = false) {
+            document.getElementById('modalName').innerText = isim; const mBody = document.getElementById('modalBody'); const selAy = document.getElementById('modalAy').value; const selYil = document.getElementById('modalYil').value; mBody.innerHTML = "";
+            const kisiKayitlari = tumKayitlar.filter(r => { if (r.name.toUpperCase().trim() !== isim.toUpperCase().trim()) return false; if (tumu) return true; const parts = r.date.split('.'); return parts[1] === selAy && parts[2] === selYil; });
+            const gunlukGruplar = {}; kisiKayitlari.forEach(r => { if (!gunlukGruplar[r.date]) gunlukGruplar[r.date] = { giris: null, cikis: null }; if(r.type==="GİRİŞ") gunlukGruplar[r.date].giris = r; if(r.type==="ÇIKIŞ") gunlukGruplar[r.date].cikis = r; });
+            const sortedDates = Object.keys(gunlukGruplar).sort((a,b) => { const partsA = a.split('.'); const partsB = b.split('.'); return new Date(partsB[2], partsB[1]-1, partsB[0]) - new Date(partsA[2], partsA[1]-1, partsA[0]); });
+            let toplamDakika = 0; let counter = 1;
+            sortedDates.forEach(date => {
+                const g = gunlukGruplar[date];
+                let sureMetni = "-";
+                if (g.giris && g.cikis) {
+                    const [gH, gM] = g.giris.time.split(':').map(Number);
+                    const [cH, cM] = g.cikis.time.split(':').map(Number);
+                    const fark = (cH * 60 + cM) - (gH * 60 + gM);
+                    if (fark > 0) { toplamDakika += fark; sureMetni = `${Math.floor(fark / 60)}S ${fark % 60}DK`; }
+                }
+                const girisSaat = g.giris ? g.giris.time : "--:--";
+                const cikisSaat = g.cikis ? g.cikis.time : "--:--";
+                mBody.innerHTML += `<tr class="border-b border-slate-50">
+                    <td class="py-4 text-center font-black text-slate-900">${counter++}</td>
+                    <td class="py-4 text-center font-black text-slate-900">${date}</td>
+                    <td class="py-4 text-center font-black">
+                        <span class="text-emerald-600">${girisSaat}</span> - <span class="text-rose-600">${cikisSaat}</span>
+                    </td>
+                    <td class="py-4 text-right"><span class="text-blue-600 font-black">${sureMetni}</span></td>
+                </tr>`;
+            });
+            document.getElementById('modalTotalTime').innerText = `${Math.floor(toplamDakika / 60)}s ${toplamDakika % 60}dk`;
+            document.getElementById('modalWorkDays').innerText = `${(toplamDakika / 480).toFixed(1)} GÜN`;
+            document.getElementById('personelModal').classList.remove('hidden');
+        }
+
+        function topluAylikDokum() {
+            const now = new Date(); const curMonth = (now.getMonth() + 1).toString().padStart(2, '0'); const curYear = now.getFullYear().toString();
+            const ayIsmi = ["OCAK", "ŞUBAT", "MART", "NİSAN", "MAYIS", "HAZİRAN", "TEMMUZ", "AĞUSTOS", "EYLÜL", "EKİM", "KASIM", "ARALIK"][now.getMonth()];
+            const personeller = [...new Set(tumKayitlar.map(r => r.name.toUpperCase().trim()))].sort((a, b) => a.localeCompare(b, 'tr'));
+            let htmlTablo = `<table><thead><tr><th style="width:60px">NO</th><th>PERSONEL ADI SOYADI</th><th>TOPLAM SÜRE</th><th>GÜN (8S)</th></tr></thead><tbody>`;
+            let noCount = 1;
+            personeller.forEach(pName => {
+                const aylikKayitlar = tumKayitlar.filter(r => { const parts = r.date.split('.'); return r.name.toUpperCase().trim() === pName && parts[1] === curMonth && parts[2] === curYear; });
+                const gunlukGruplar = {}; aylikKayitlar.forEach(r => { if (!gunlukGruplar[r.date]) gunlukGruplar[r.date] = []; gunlukGruplar[r.date].push(r); });
+                let pDakika = 0;
+                Object.values(gunlukGruplar).forEach(logs => {
+                    let giris = logs.find(l => l.type === "GİRİŞ"); let cikis = logs.find(l => l.type === "ÇIKIŞ");
+                    if (giris && cikis) { const [gH, gM] = giris.time.split(':').map(Number); const [cH, cM] = cikis.time.split(':').map(Number); const fark = (cH * 60 + cM) - (gH * 60 + gM); if (fark > 0) pDakika += fark; }
+                });
+                if (pDakika > 0) { htmlTablo += `<tr><td>${noCount++}</td><td style="text-align:left;padding-left:20px">${pName}</td><td>${Math.floor(pDakika / 60)}S ${pDakika % 60}DK</td><td>${(pDakika/480).toFixed(1)}</td></tr>`; }
+            });
+            htmlTablo += "</tbody></table>";
+            const pencere = window.open('', '', 'height=800,width=1000');
+            pencere.document.write(`<html><head><title>Aylık Puantaj</title><style>body{font-family:Arial,sans-serif;padding:30px;color:black} h1{text-align:center;text-transform:uppercase;font-size:20pt;border-bottom:2px solid black;padding-bottom:10px} table{width:100%;border-collapse:collapse;margin-top:20px;border:1px solid black} th,td{border:1px solid black;padding:12px;text-align:center;text-transform:uppercase;font-weight:bold;font-size:12pt} th{background:#eee} footer{margin-top:40px;text-align:center;font-size:10pt;font-weight:bold;border-top:1px solid black;padding-top:10px}</style></head><body><h1>${ayIsmi} ${curYear} PERSONEL ÇALIŞMA ÇİZELGESİ</h1>${htmlTablo}<footer>© 2026 SBF Bilgi İşlem Birimi - Tüm Hakları Saklıdır.</footer></body></html>`);
+            pencere.document.close(); setTimeout(() => { pencere.print(); }, 250);
+        }
+
+        function modalKapat() { document.getElementById('personelModal').classList.add('hidden'); }
+        function ozelYazdir() {
+            const isim = document.getElementById('modalName').innerText; const baslik = document.getElementById('totalTimeTitle').innerText; const sure = document.getElementById('modalTotalTime').innerText; const gun = document.getElementById('modalWorkDays').innerText; const icerik = document.getElementById('modalBody').parentElement.outerHTML;
+            const pencere = window.open('', '', 'height=800,width=1000');
+            pencere.document.write(`<html><head><title>Personel Dosyası</title><style>body{font-family:Arial,sans-serif;padding:30px;color:black} h1{text-align:center;text-transform:uppercase;font-size:20pt;border-bottom:2px solid black;padding-bottom:10px} .sum-box{margin:20px 0;padding:15px;border:2px solid #000;text-align:center} .sum-box p{margin:0;font-size:11pt;font-weight:bold} .sum-box div{font-size:22pt;font-weight:bold} table{width:100%;border-collapse:collapse;border:1px solid black} th,td{border:1px solid black;padding:10px;text-align:center;text-transform:uppercase;font-weight:bold;font-size:11pt} th{background:#eee} footer{margin-top:40px;text-align:center;font-size:10pt;font-weight:bold;border-top:1px solid black;padding-top:10px}</style></head><body><h1>PERSONEL DOSYASI: ${isim}</h1><div class="sum-box"><p>${baslik}</p><div>${sure} / ${gun}</div></div>${icerik}<footer>© 2026 SBF Bilgi İşlem Birimi - Tüm Hakları Saklıdır.</footer></body></html>`);
+            pencere.document.close(); setTimeout(() => { pencere.print(); }, 250);
+        }
+        function filtreTemizle() { document.getElementById("araInput").value=""; document.getElementById("tarihInput").value = getTRDate(); document.getElementById("tipInput").value=""; tabloyuFiltrele(); }
     </script>
 </body>
 </html>
