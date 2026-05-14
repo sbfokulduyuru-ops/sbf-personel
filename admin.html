@@ -187,7 +187,7 @@
                     const [gH, gM] = g.giris.time.split(':').map(Number);
                     const [cH, cM] = g.cikis.time.split(':').map(Number);
                     const fark = (cH * 60 + cM) - (gH * 60 + gM);
-                    if (fark > 0) sureMetni = `${Math.floor(fark / 60)}S ${fark % 60}DK`;
+                    if (fark > 0) sureMetni = `${Math.floor(fark / 60)}s ${fark % 60}dk`;
                 }
 
                 const girisSaat = g.giris ? g.giris.time : "--:--";
@@ -207,7 +207,12 @@
                             <span class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${cikisStil}">${cikisSaat}</span>
                         </div>
                     </td>
-                    <td class="text-center font-black text-blue-600 text-lg">${sureMetni}</td>
+                    <td class="text-center font-black italic text-blue-900 text-lg">
+                        <div class="flex items-center justify-center gap-2">
+                            ${sureMetni !== '--' ? '<i class="fa-regular fa-clock text-blue-800/60 text-base"></i>' : ''}
+                            <span>${sureMetni}</span>
+                        </div>
+                    </td>
                     <td class="text-center no-print">
                         ${!g.isGhost ? `<button onclick="kayitlariSil('${g.ids.join(',')}')" class="text-slate-300 hover:text-red-500 p-3"><i class="fa-solid fa-trash-can text-xl"></i></button>` : ''}
                     </td>
@@ -252,7 +257,7 @@
                     const [gH, gM] = g.giris.time.split(':').map(Number);
                     const [cH, cM] = g.cikis.time.split(':').map(Number);
                     const fark = (cH * 60 + cM) - (gH * 60 + gM);
-                    if (fark > 0) { toplamDakika += fark; sureMetni = `${Math.floor(fark / 60)}S ${fark % 60}DK`; }
+                    if (fark > 0) { toplamDakika += fark; sureMetni = `${Math.floor(fark / 60)}s ${fark % 60}dk`; }
                 }
                 const girisSaat = g.giris ? g.giris.time : "--:--";
                 const cikisSaat = g.cikis ? g.cikis.time : "--:--";
@@ -262,11 +267,10 @@
                     <td class="py-4 text-center font-black">
                         <span class="text-emerald-600">${girisSaat}</span> - <span class="text-rose-600">${cikisSaat}</span>
                     </td>
-                    <td class="py-4 text-right"><span class="text-blue-600 font-black">${sureMetni}</span></td>
+                    <td class="py-4 text-right"><span class="text-blue-900 font-black italic">${sureMetni}</span></td>
                 </tr>`;
             });
             document.getElementById('modalTotalTime').innerText = `${Math.floor(toplamDakika / 60)}s ${toplamDakika % 60}dk`;
-            // GÜN HESABI 7 SAAT (420 DAKİKA) ÜZERİNDEN GÜNCELLENDİ
             document.getElementById('modalWorkDays').innerText = `${(toplamDakika / 420).toFixed(1)} GÜN`;
             document.getElementById('personelModal').classList.remove('hidden');
         }
@@ -275,8 +279,7 @@
             const now = new Date(); const curMonth = (now.getMonth() + 1).toString().padStart(2, '0'); const curYear = now.getFullYear().toString();
             const ayIsmi = ["OCAK", "ŞUBAT", "MART", "NİSAN", "MAYIS", "HAZİRAN", "TEMMUZ", "AĞUSTOS", "EYLÜL", "EKİM", "KASIM", "ARALIK"][now.getMonth()];
             const personeller = [...new Set(tumKayitlar.map(r => r.name.toUpperCase().trim()))].sort((a, b) => a.localeCompare(b, 'tr'));
-            // BAŞLIK GÜN (7S) OLARAK GÜNCELLENDİ
-            let htmlTablo = `<table><thead><tr><th style="width:60px">NO</th><th>PERSONEL ADI SOYADI</th><th>TOPLAM SÜRE</th><th>GÜN (7S)</th></tr></thead><tbody>`;
+            let htmlTablo = `<table><thead><tr><th style="width:60px">NO</th><th>PERSONEL ADI SOYADI</th><th>TOPLAM SÜRE</th><th>GÜN (7s)</th></tr></thead><tbody>`;
             let noCount = 1;
             personeller.forEach(pName => {
                 const aylikKayitlar = tumKayitlar.filter(r => { const parts = r.date.split('.'); return r.name.toUpperCase().trim() === pName && parts[1] === curMonth && parts[2] === curYear; });
@@ -286,8 +289,7 @@
                     let giris = logs.find(l => l.type === "GİRİŞ"); let cikis = logs.find(l => l.type === "ÇIKIŞ");
                     if (giris && cikis) { const [gH, gM] = giris.time.split(':').map(Number); const [cH, cM] = cikis.time.split(':').map(Number); const fark = (cH * 60 + cM) - (gH * 60 + gM); if (fark > 0) pDakika += fark; }
                 });
-                // TABLO HESABI 420 DAKİKA (7 SAAT) ÜZERİNDEN GÜNCELLENDİ
-                if (pDakika > 0) { htmlTablo += `<tr><td>${noCount++}</td><td style="text-align:left;padding-left:20px">${pName}</td><td>${Math.floor(pDakika / 60)}S ${pDakika % 60}DK</td><td>${(pDakika/420).toFixed(1)}</td></tr>`; }
+                if (pDakika > 0) { htmlTablo += `<tr><td>${noCount++}</td><td style="text-align:left;padding-left:20px">${pName}</td><td>${Math.floor(pDakika / 60)}s ${pDakika % 60}dk</td><td>${(pDakika/420).toFixed(1)}</td></tr>`; }
             });
             htmlTablo += "</tbody></table>";
             const pencere = window.open('', '', 'height=800,width=1000');
