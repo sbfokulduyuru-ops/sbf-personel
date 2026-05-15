@@ -142,7 +142,7 @@
         function logout() { sessionStorage.removeItem('admin_session'); location.reload(); }
         function baslat() { verileriCek(); setInterval(verileriCek, 3000); }
 
-        // CORS ENGELLERİNİ SIFIRLAYAN TAM JSONP VERİ MOTORU
+        // GÖNDERDİĞİNİZ HAM VERİ YAPISIYLA TAM UYUMLU AGRESİF VERİ ÇEKME MOTORU
         function verileriCek() {
             const govde = document.getElementById('tabloBody');
             if(!govde || govde.innerHTML.trim() === "") {
@@ -153,15 +153,27 @@
             const callbackName = 'get_records_cb_' + Math.floor(Math.random() * 1e6);
             
             window[callbackName] = function(data) {
-                if(data && data.secureKey) {
-                    let cleanCode = (parseInt(data.secureKey.toString()) % 1000000).toString().padStart(6, '0');
+                // Eğer veri doğrudan bir dizi olarak veya bir obje içinde gelirse ikisini de destekliyoruz
+                let recordsData = [];
+                let secureKeyData = "";
+
+                if (Array.isArray(data)) {
+                    recordsData = data;
+                } else if (data && data.records) {
+                    recordsData = data.records;
+                    secureKeyData = data.secureKey;
+                }
+
+                // Güvenlik anahtarı mevcutsa ekrana bas
+                if(secureKeyData) {
+                    let cleanCode = (parseInt(secureKeyData.toString()) % 1000000).toString().padStart(6, '0');
                     const kodElement = document.getElementById('kod');
                     if(kodElement && kodElement.innerText !== cleanCode) {
                         kodElement.innerText = cleanCode;
                     }
                 }
 
-                let currentHash = JSON.stringify(data.records || []);
+                let currentHash = JSON.stringify(recordsData);
                 if (currentHash === sonVeriHash) {
                     delete window[callbackName];
                     document.body.removeChild(script);
@@ -169,7 +181,7 @@
                 }
                 
                 sonVeriHash = currentHash;
-                tumKayitlar = data.records || [];
+                tumKayitlar = recordsData;
                 tabloyuFiltrele();
                 
                 delete window[callbackName];
