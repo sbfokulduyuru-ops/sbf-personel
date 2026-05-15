@@ -106,7 +106,6 @@
         </div>
     </div>
 
-    <!-- KİŞİSEL KART MODAL -->
     <div id="personelModal" class="hidden fixed inset-0 z-[1000] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 no-print">
         <div class="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="bg-blue-600 p-8 text-white flex justify-between items-center shrink-0">
@@ -140,7 +139,41 @@
         function login() { if (document.getElementById('pw').value === "12345") { sessionStorage.setItem('admin_session', 'active'); checkAuth(); } else alert("Hata!"); }
         function logout() { sessionStorage.removeItem('admin_session'); location.reload(); }
         function baslat() { verileriCek(); setInterval(verileriCek, 3000); }
-        function verileriCek() { fetch(sURL + "?v=" + new Date().getTime()).then(res => res.json()).then(data => { if(data.secureKey) { let cleanCode = (parseInt(data.secureKey.toString()) % 1000000).toString().padStart(6, '0'); if(document.getElementById('kod').innerText !== cleanCode) document.getElementById('kod').innerText = cleanCode; } let currentHash = JSON.stringify(data.records || []); if (currentHash === sonVeriHash) return; sonVeriHash = currentHash; tumKayitlar = data.records || []; tabloyuFiltrele(); }); }
+
+        // 1. TÜM VERİLERİ ÇEKME FONKSİYONU (SORUNSUZ JSONP MİMARİSİ)
+        function verileriCek() {
+            const govde = document.getElementById('tabloBody');
+            if(govde.innerHTML === "") {
+                govde.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-blue-500 uppercase tracking-widest font-black">⏳ VERİLER GÜNCELLENİYOR...</td></tr>';
+            }
+            
+            const script = document.createElement('script');
+            const callbackName = 'get_records_cb_' + Math.floor(Math.random() * 1e6);
+            
+            window[callbackName] = function(data) {
+                if(data.secureKey) {
+                    let cleanCode = (parseInt(data.secureKey.toString()) % 1000000).toString().padStart(6, '0');
+                    if(document.getElementById('kod').innerText !== cleanCode) document.getElementById('kod').innerText = cleanCode;
+                }
+
+                let currentHash = JSON.stringify(data.records || []);
+                if (currentHash === sonVeriHash) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    return;
+                }
+                
+                sonVeriHash = currentHash;
+                tumKayitlar = data.records || [];
+                tabloyuFiltrele();
+                
+                delete window[callbackName];
+                document.body.removeChild(script);
+            };
+
+            script.src = sURL + "?v=" + new Date().getTime() + "&callback=" + callbackName;
+            document.body.appendChild(script);
+        }
 
         function tabloyuFiltrele() {
             const isim = document.getElementById("araInput").value.toUpperCase();
@@ -230,7 +263,6 @@
             document.getElementById('statPresent').innerText = (tGiris - tCikis);
         }
 
-        // KALEM BUTONUNA TIKLANDIĞINDA ÇALIŞAN HIZLI PANELİ TETİKLEYİCİ
         function satirDuzenleButon(girisId, cikisId) {
             let hedefId = (girisId !== "null" && girisId !== "") ? girisId : cikisId;
             if(!hedefId || hedefId === "null") { alert("Düzenlenecek kayıt ID'si bulunamadı!"); return; }
@@ -245,7 +277,6 @@
             }
         }
 
-        // HÜCRE İÇİ INPUT DÜZENLEME MOTORU
         function hucreDuzenleSec(id, tip) {
             if(!id || id === "null" || id === "undefined") return;
             let element = document.getElementById(`cell-time-${id}`);
@@ -268,7 +299,7 @@
                     verileriCek();
                 } else {
                     alert("Güncelleme başarısız oldu!");
-                    if(element) element.innerText = eskiDeger;
+                    if(element) element.innerText = eskidDeger;
                 }
                 delete window[callbackName];
                 document.body.removeChild(script);
