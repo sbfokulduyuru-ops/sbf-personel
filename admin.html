@@ -140,7 +140,7 @@
         function logout() { sessionStorage.removeItem('admin_session'); location.reload(); }
         function baslat() { verileriCek(); setInterval(verileriCek, 3000); }
 
-        // 1. TÜM VERİLERİ ÇEKME FONKSİYONU (SORUNSUZ JSONP MİMARİSİ)
+        // CORS ENGELLERİNİ SIFIRLAYAN TAM JSONP VERİ MOTORU
         function verileriCek() {
             const govde = document.getElementById('tabloBody');
             if(govde.innerHTML === "") {
@@ -299,7 +299,7 @@
                     verileriCek();
                 } else {
                     alert("Güncelleme başarısız oldu!");
-                    if(element) element.innerText = eskidDeger;
+                    if(element) element.innerText = eskiDeger;
                 }
                 delete window[callbackName];
                 document.body.removeChild(script);
