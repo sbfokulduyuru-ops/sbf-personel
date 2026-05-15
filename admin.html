@@ -2,6 +2,7 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SBF ADMİN - KONTROL PANELİ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -95,7 +96,7 @@
                             <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight">TARİH</th>
                             <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight w-64">GİRİŞ - ÇIKIŞ</th>
                             <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight">TOPLAM SÜRE</th>
-                            <th class="p-6 text-center no-print text-red-500 w-12">SİL</th>
+                            <th class="p-6 text-center no-print text-slate-500 w-32">İŞLEMLER</th>
                         </tr>
                     </thead>
                     <tbody id="tabloBody" class="font-bold text-slate-700 italic text-sm"></tbody>
@@ -153,9 +154,9 @@
             const gruplar = {};
             tumKayitlar.forEach(r => {
                 const key = `${r.name}_${r.date}`;
-                if (!gruplar[key]) gruplar[key] = { name: r.name, date: r.date, giris: null, cikis: null, ids: [] };
-                if (r.type === "GİRİŞ") gruplar[key].giris = r;
-                if (r.type === "ÇIKIŞ") gruplar[key].cikis = r;
+                if (!gruplar[key]) gruplar[key] = { name: r.name, date: r.date, giris: null, cikis: null, ids: [], rGirisId: null, rCikisId: null };
+                if (r.type === "GİRİŞ") { gruplar[key].giris = r; gruplar[key].rGirisId = r.id; }
+                if (r.type === "ÇIKIŞ") { gruplar[key].cikis = r; gruplar[key].rCikisId = r.id; }
                 gruplar[key].ids.push(r.id);
             });
 
@@ -192,8 +193,8 @@
 
                 const girisSaat = g.giris ? g.giris.time : "--:--";
                 const cikisSaat = g.cikis ? g.cikis.time : "--:--";
-                const girisStil = g.giris ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-slate-50 text-slate-300 border-slate-100";
-                const cikisStil = g.cikis ? "bg-rose-50 text-rose-600 border-rose-100" : "bg-slate-50 text-slate-300 border-slate-100";
+                const girisStil = g.giris ? "bg-emerald-50 text-emerald-600 border-emerald-100 cursor-pointer" : "bg-slate-50 text-slate-300 border-slate-100";
+                const cikisStil = g.cikis ? "bg-rose-50 text-rose-600 border-rose-100 cursor-pointer" : "bg-slate-50 text-slate-300 border-slate-100";
 
                 if(!g.isGhost) { if(g.giris) tGiris++; if(g.cikis) tCikis++; }
 
@@ -202,9 +203,9 @@
                     <td class="text-center font-bold text-lg">${g.date}</td>
                     <td class="text-center">
                         <div class="flex items-center justify-center gap-3">
-                            <span class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${girisStil}">${girisSaat}</span>
+                            <span id="cell-time-${g.rGirisId || 'none-g'}" ondblclick="hucreDuzenleSec('${g.rGirisId}', 'saat')" class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${girisStil}">${girisSaat}</span>
                             <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
-                            <span class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${cikisStil}">${cikisSaat}</span>
+                            <span id="cell-time-${g.rCikisId || 'none-c'}" ondblclick="hucreDuzenleSec('${g.rCikisId}', 'saat')" class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${cikisStil}">${cikisSaat}</span>
                         </div>
                     </td>
                     <td class="text-center font-black italic text-blue-900 text-lg">
@@ -213,8 +214,11 @@
                             <span>${sureMetni}</span>
                         </div>
                     </td>
-                    <td class="text-center no-print">
-                        ${!g.isGhost ? `<button onclick="kayitlariSil('${g.ids.join(',')}')" class="text-slate-300 hover:text-red-500 p-3"><i class="fa-solid fa-trash-can text-xl"></i></button>` : ''}
+                    <td class="text-center no-print flex items-center justify-center gap-1">
+                        ${!g.isGhost ? `
+                        <button onclick="satirDuzenleButon('${g.rGirisId}', '${g.rCikisId}')" class="text-slate-300 hover:text-amber-500 p-3" title="Tarih / Saat Düzenle"><i class="fa-solid fa-pen-to-square text-xl"></i></button>
+                        <button onclick="kayitlariSil('${g.ids.join(',')}')" class="text-slate-300 hover:text-red-500 p-3" title="Kayıt Sil"><i class="fa-solid fa-trash-can text-xl"></i></button>
+                        ` : ''}
                     </td>
                 </tr>`;
             });
@@ -224,6 +228,58 @@
             document.getElementById('statIn').innerText = tGiris;
             document.getElementById('statOut').innerText = tCikis;
             document.getElementById('statPresent').innerText = (tGiris - tCikis);
+        }
+
+        // KALEM BUTONUNA TIKLANDIĞINDA ÇALIŞAN HIZLI PANELİ TETİKLEYİCİ
+        function satirDuzenleButon(girisId, cikisId) {
+            let hedefId = (girisId !== "null" && girisId !== "") ? girisId : cikisId;
+            if(!hedefId || hedefId === "null") { alert("Düzenlenecek kayıt ID'si bulunamadı!"); return; }
+            
+            let secim = prompt("Düzenlemek istediğiniz alanı seçin:\n1 - TARİH Değiştir\n2 - GİRİŞ SAATİ Değiştir\n3 - ÇIKIŞ SAATİ Değiştir", "1");
+            if(secim === "1") {
+                hucreDuzenleSec(hedefId, 'tarih');
+            } else if(secim === "2") {
+                if(girisId && girisId !== "null" && girisId !== "") hucreDuzenleSec(girisId, 'saat'); else alert("Bu kayda ait giriş verisi yok!");
+            } else if(secim === "3") {
+                if(cikisId && cikisId !== "null" && cikisId !== "") hucreDuzenleSec(cikisId, 'saat'); else alert("Bu kayda ait çıkış verisi yok!");
+            }
+        }
+
+        // HÜCRE İÇİ INPUT DÜZENLEME MOTORU
+        function hucreDuzenleSec(id, tip) {
+            if(!id || id === "null" || id === "undefined") return;
+            let element = document.getElementById(`cell-time-${id}`);
+            let eskiDeger = element ? element.innerText : "";
+            
+            let yeniDeger = prompt(`Yeni ${tip.toUpperCase()} değerini giriniz:`, eskiDeger || (tip === 'tarih' ? '15.05.2026' : '09:00'));
+            if (yeniDeger === null) return;
+            yeniDeger = yeniDeger.trim();
+            
+            if(yeniDeger === "" || yeniDeger === eskiDeger) return;
+
+            if(element) element.innerText = "⏳...";
+
+            const script = document.createElement('script');
+            const callbackName = 'update_cb_' + Math.floor(Math.random() * 1e6);
+            
+            window[callbackName] = function(data) {
+                if (data.result === "OK") {
+                    sonVeriHash = ""; 
+                    verileriCek();
+                } else {
+                    alert("Güncelleme başarısız oldu!");
+                    if(element) element.innerText = eskiDeger;
+                }
+                delete window[callbackName];
+                document.body.removeChild(script);
+            };
+
+            let params = `?action=guncelle&id=${id}&callback=${callbackName}`;
+            if (tip === 'tarih') params += `&newDate=${encodeURIComponent(yeniDeger)}`;
+            if (tip === 'saat') params += `&newTime=${encodeURIComponent(yeniDeger)}`;
+
+            script.src = sURL + params;
+            document.body.appendChild(script);
         }
 
         function kayitlariSil(idsStr) {
