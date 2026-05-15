@@ -93,9 +93,9 @@
                         <tr>
                             <th class="p-6 text-slate-900 text-lg font-black uppercase tracking-tight">PERSONEL ADI</th>
                             <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight">TARİH</th>
-                            <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight w-64">GİRİŞ - ÇIKIŞ</th>
+                            <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight w-64">GİRİŞ - ÇIKIŞ (DÜZELTMEK İÇİN ÇİFT TIKLA)</th>
                             <th class="p-6 text-center text-slate-900 text-lg font-black uppercase tracking-tight">TOPLAM SÜRE</th>
-                            <th class="p-6 text-center no-print text-slate-500 w-32">İŞLEMLER</th>
+                            <th class="p-6 text-center no-print text-red-500 w-12">SİL</th>
                         </tr>
                     </thead>
                     <tbody id="tabloBody" class="font-bold text-slate-700 italic text-sm"></tbody>
@@ -130,9 +130,7 @@
     </div>
 
     <script>
-        // Sizin en son aldığınız Web Uygulaması URL adresi
         const sURL = "https://script.google.com/macros/s/AKfycbwTULb9lR87BOI4tB20JEa9ntzi1N9Rm9ipE79R-oXsvRb7BV3Ug-G_Ckr8FXhTfB-A/exec";
-        
         let tumKayitlar = []; let sonVeriHash = "";
         function getTRDate() { const now = new Date(); const trNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000)); return trNow.toISOString().split('T')[0]; }
         function checkAuth() { if (sessionStorage.getItem('admin_session') === 'active') { document.getElementById('lock').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); const trToday = getTRDate(); document.getElementById('tarihInput').value = trToday; document.getElementById('tarihInput').setAttribute('max', trToday); document.getElementById('modalAy').value = (new Date().getMonth() + 1).toString().padStart(2, '0'); baslat(); updateClock(); } }
@@ -140,50 +138,28 @@
         function login() { if (document.getElementById('pw').value === "12345") { sessionStorage.setItem('admin_session', 'active'); checkAuth(); } else alert("Hata!"); }
         function logout() { sessionStorage.removeItem('admin_session'); location.reload(); }
         function baslat() { verileriCek(); setInterval(verileriCek, 3000); }
-
-        // SİZİN ÇALIŞAN FOTOĞRAFTAKİ EN TEMİZ VERİ ÇEKME MOTORUNUZ (JSONP GÜVENLİK AYARLI)
-        function verileriCek() {
-            const govde = document.getElementById('tabloBody');
-            
+        
+        // FOTOĞRAFTA GÖRDÜĞÜMÜZ ÇALIŞAN EN TEMİZ VE KARARLI VERİ ÇEKME MOTORU
+        function verileriCek() { 
             const script = document.createElement('script');
             const callbackName = 'get_records_cb_' + Math.floor(Math.random() * 1e6);
             
-            window[callbackName] = function(data) {
-                let recordsData = [];
-                let secureKeyData = "";
-
-                if (Array.isArray(data)) {
-                    recordsData = data;
-                } else if (data && data.records) {
-                    recordsData = data.records;
-                    secureKeyData = data.secureKey;
-                }
-
-                if(secureKeyData) {
-                    let cleanCode = (parseInt(secureKeyData.toString()) % 1000000).toString().padStart(6, '0');
-                    const kodElement = document.getElementById('kod');
-                    if(kodElement && kodElement.innerText !== cleanCode) {
-                        kodElement.innerText = cleanCode;
-                    }
-                }
-
-                let currentHash = JSON.stringify(recordsData);
-                if (currentHash === sonVeriHash) {
-                    delete window[callbackName];
-                    document.body.removeChild(script);
-                    return;
-                }
-                
-                sonVeriHash = currentHash;
-                tumKayitlar = recordsData;
-                tabloyuFiltrele();
-                
-                delete window[callbackName];
-                document.body.removeChild(script);
-            };
-
-            script.src = sURL + "?v=" + new Date().getTime() + "&callback=" + callbackName;
-            document.body.appendChild(script);
+            window[callbackName] = function(data) { 
+                let recordsData = data.records || data;
+                if(data.secureKey) { 
+                    let cleanCode = (parseInt(data.secureKey.toString()) % 1000000).toString().padStart(6, '0'); 
+                    if(document.getElementById('kod').innerText !== cleanCode) document.getElementById('kod').innerText = cleanCode; 
+                } 
+                let currentHash = JSON.stringify(recordsData); 
+                if (currentHash === sonVeriHash) { delete window[callbackName]; document.body.removeChild(script); return; } 
+                sonVeriHash = currentHash; 
+                tumKayitlar = recordsData; 
+                tabloyuFiltrele(); 
+                delete window[callbackName]; 
+                document.body.removeChild(script); 
+            }; 
+            script.src = sURL + "?v=" + new Date().getTime() + "&callback=" + callbackName; 
+            document.body.appendChild(script); 
         }
 
         function tabloyuFiltrele() {
@@ -198,9 +174,9 @@
             const gruplar = {};
             tumKayitlar.forEach(r => {
                 const key = `${r.name}_${r.date}`;
-                if (!gruplar[key]) gruplar[key] = { name: r.name, date: r.date, giris: null, cikis: null, ids: [], rGirisId: null, rCikisId: null };
-                if (r.type === "GİRİŞ") { gruplar[key].giris = r; gruplar[key].rGirisId = r.id; }
-                if (r.type === "ÇIKIŞ") { gruplar[key].cikis = r; gruplar[key].rCikisId = r.id; }
+                if (!gruplar[key]) gruplar[key] = { name: r.name, date: r.date, giris: null, cikis: null, ids: [] };
+                if (r.type === "GİRİŞ") gruplar[key].giris = r;
+                if (r.type === "ÇIKIŞ") gruplar[key].cikis = r;
                 gruplar[key].ids.push(r.id);
             });
 
@@ -237,19 +213,24 @@
 
                 const girisSaat = g.giris ? g.giris.time : "--:--";
                 const cikisSaat = g.cikis ? g.cikis.time : "--:--";
-                const girisStil = g.giris ? "bg-emerald-50 text-emerald-600 border-emerald-100 cursor-pointer" : "bg-slate-50 text-slate-300 border-slate-100";
-                const cikisStil = g.cikis ? "bg-rose-50 text-rose-600 border-rose-100 cursor-pointer" : "bg-slate-50 text-slate-300 border-slate-100";
+                
+                // Çift tıklama için ID'leri veya null durumunu belirliyoruz
+                const gID = g.giris ? g.giris.id : "";
+                const cID = g.cikis ? g.cikis.id : "";
+
+                const girisStil = g.giris ? "bg-emerald-50 text-emerald-600 border-emerald-100 cursor-pointer select-none" : "bg-slate-50 text-slate-300 border-slate-100";
+                const cikisStil = g.cikis ? "bg-rose-50 text-rose-600 border-rose-100 cursor-pointer select-none" : "bg-slate-50 text-slate-300 border-slate-100";
 
                 if(!g.isGhost) { if(g.giris) tGiris++; if(g.cikis) tCikis++; }
 
                 htmlBuffer += `<tr class="tight-row border-b personel-row">
                     <td onclick="kisiDetayGoster('${g.name}')" class="personel-name-cell"><div class="text-slate-800 hover:text-blue-600 transition-colors">${g.name}</div></td>
-                    <td class="text-center font-bold text-lg">${g.date}</td>
+                    <td class="text-center font-bold text-lg cursor-pointer hover:text-blue-600 select-none" ondblclick="saatVeyaTarihGuncelle('${gID || cID}', 'tarih', '${g.date}')">${g.date}</td>
                     <td class="text-center">
                         <div class="flex items-center justify-center gap-3">
-                            <span id="cell-time-${g.rGirisId || 'none-g'}" class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${girisStil}">${girisSaat}</span>
+                            <span ${gID ? `ondblclick="saatVeyaTarihGuncelle('${gID}', 'saat', '${girisSaat}')"` : ''} class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${girisStil}" title="Değiştirmek için Çift Tıkla">${girisSaat}</span>
                             <i class="fa-solid fa-arrow-right text-slate-300 text-xs"></i>
-                            <span id="cell-time-${g.rCikisId || 'none-c'}" class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${cikisStil}">${cikisSaat}</span>
+                            <span ${cID ? `ondblclick="saatVeyaTarihGuncelle('${cID}', 'saat', '${cikisSaat}')"` : ''} class="px-5 py-2.5 rounded-xl border text-lg font-black shadow-sm ${cikisStil}" title="Değiştirmek için Çift Tıkla">${cikisSaat}</span>
                         </div>
                     </td>
                     <td class="text-center font-black italic text-blue-900 text-lg">
@@ -258,11 +239,8 @@
                             <span>${sureMetni}</span>
                         </div>
                     </td>
-                    <td class="text-center no-print flex items-center justify-center gap-1">
-                        ${!g.isGhost ? `
-                        <button onclick="satirDuzenleButon('${g.rGirisId}', '${g.rCikisId}')" class="text-slate-300 hover:text-amber-500 p-3" title="Tarih / Saat Düzenle"><i class="fa-solid fa-pen-to-square text-xl"></i></button>
-                        <button onclick="kayitlariSil('${g.ids.join(',')}')" class="text-slate-300 hover:text-red-500 p-3" title="Kayıt Sil"><i class="fa-solid fa-trash-can text-xl"></i></button>
-                        ` : ''}
+                    <td class="text-center no-print">
+                        ${!g.isGhost ? `<button onclick="kayitlariSil('${g.ids.join(',')}')" class="text-slate-300 hover:text-red-500 p-3"><i class="fa-solid fa-trash-can text-xl"></i></button>` : ''}
                     </td>
                 </tr>`;
             });
@@ -274,36 +252,27 @@
             document.getElementById('statPresent').innerText = (tGiris - tCikis);
         }
 
-        // PROMPT YÖNTEMİYLE EN GARANTİ GÜNCELLEME SARMALAYICISI
-        function satirDuzenleButon(girisId, cikisId) {
-            let hedefId = (girisId !== "null" && girisId !== "" && girisId !== null) ? girisId : cikisId;
-            if(!hedefId) { alert("Düzenlenecek kayıt ID'si bulunamadı!"); return; }
+        // HÜCREYE ÇİFT TIKLANDIĞINDA ÇALIŞAN PIRIL PIRIL YENİ PROMPT MOTORU
+        function saatVeyaTarihGuncelle(id, tip, eskiDeger) {
+            if(!id || id === "null" || id === "") { alert("Bu kayda ait geçerli veri bulunamadı!"); return; }
             
-            let secim = prompt("Düzenlemek istediğiniz alanı seçin:\n1 - TARİH Değiştir\n2 - GİRİŞ SAATİ Değiştir\n3 - ÇIKIŞ SAATİ Değiştir", "1");
-            if(secim === "1") {
-                hucreDuzenleSec(hedefId, 'tarih');
-            } else if(secim === "2") {
-                if(girisId && girisId !== "null") hucreDuzenleSec(girisId, 'saat'); else alert("Bu kayda ait giriş verisi yok!");
-            } else if(secim === "3") {
-                if(cikisId && cikisId !== "null") hucreDuzenleSec(cikisId, 'saat'); else alert("Bu kayda ait çıkış verisi yok!");
-            }
-        }
-
-        function hucreDuzenleSec(id, tip) {
-            let yeniDeger = prompt(`Yeni ${tip.toUpperCase()} değerini giriniz (Örn: 15.05.2026 veya 09:00):`);
-            if (yeniDeger === null) return;
+            let mesaj = tip === 'tarih' ? "Yeni TARİH değerini girin (GG.AA.YYYY):" : "Yeni SAAT değerini girin (SS:DD):";
+            let yeniDeger = prompt(mesaj, eskiDeger);
+            
+            if (yeniDeger === null) return; // İptal edilirse çık
             yeniDeger = yeniDeger.trim();
-            if(yeniDeger === "") return;
+            if (yeniDeger === "" || yeniDeger === eskiDeger) return; // Boş veya aynıysa işlem yapma
 
+            // Kullanıcının orijinal JSONP mimarisi üzerinden Google Script'e ateşliyoruz
             const script = document.createElement('script');
             const callbackName = 'update_cb_' + Math.floor(Math.random() * 1e6);
             
             window[callbackName] = function(data) {
                 if (data.result === "OK") {
-                    sonVeriHash = ""; 
+                    sonVeriHash = ""; // Hash'i sıfırlıyoruz ki tablo anında yenilensin
                     verileriCek();
                 } else {
-                    alert("Güncelleme başarısız oldu!");
+                    alert("Hata: Güncelleme işlemi başarısız oldu!");
                 }
                 delete window[callbackName];
                 document.body.removeChild(script);
