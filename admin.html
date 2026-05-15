@@ -145,17 +145,20 @@
         // CORS ENGELLERİNİ SIFIRLAYAN TAM JSONP VERİ MOTORU
         function verileriCek() {
             const govde = document.getElementById('tabloBody');
-            if(govde.innerHTML === "") {
-                govde.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-blue-500 uppercase tracking-widest font-black">⏳ VERİLER GÜNCELLENİYOR...</td></tr>';
+            if(!govde || govde.innerHTML.trim() === "") {
+                if(govde) govde.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-blue-500 uppercase tracking-widest font-black">⏳ VERİLER GÜNCELLENİYOR...</td></tr>';
             }
             
             const script = document.createElement('script');
             const callbackName = 'get_records_cb_' + Math.floor(Math.random() * 1e6);
             
             window[callbackName] = function(data) {
-                if(data.secureKey) {
+                if(data && data.secureKey) {
                     let cleanCode = (parseInt(data.secureKey.toString()) % 1000000).toString().padStart(6, '0');
-                    if(document.getElementById('kod').innerText !== cleanCode) document.getElementById('kod').innerText = cleanCode;
+                    const kodElement = document.getElementById('kod');
+                    if(kodElement && kodElement.innerText !== cleanCode) {
+                        kodElement.innerText = cleanCode;
+                    }
                 }
 
                 let currentHash = JSON.stringify(data.records || []);
