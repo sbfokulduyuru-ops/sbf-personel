@@ -131,7 +131,9 @@
     </div>
 
     <script>
-        const sURL = "https://script.google.com/macros/s/AKfycbzHsifMaIBYD39c1DH_mNpLsvOHM-jwmDvX1CL7x7Fe6TMSAmNVWd2ou5bifUln4cBqUQ/exec";
+        // Sizin ekran görüntüsündeki en güncel Web Uygulaması URL adresiniz
+        const sURL = "https://script.google.com/macros/s/AKfycbwTULb9lR87BOI4tB20JEa9ntzi1N9Rm9ipE79R-oXsvRb7BV3Ug-G_Ckr8FXhTfB-A/exec";
+        
         let tumKayitlar = []; let sonVeriHash = "";
         function getTRDate() { const now = new Date(); const trNow = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (3 * 3600000)); return trNow.toISOString().split('T')[0]; }
         function checkAuth() { if (sessionStorage.getItem('admin_session') === 'active') { document.getElementById('lock').classList.add('hidden'); document.getElementById('main').classList.remove('hidden'); const trToday = getTRDate(); document.getElementById('tarihInput').value = trToday; document.getElementById('tarihInput').setAttribute('max', trToday); document.getElementById('modalAy').value = (new Date().getMonth() + 1).toString().padStart(2, '0'); baslat(); updateClock(); } }
